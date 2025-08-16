@@ -4,14 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.google.adk</groupId>
-        <artifactId>google-adk-parent</artifactId>
-        <version>0.2.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
 
+
+
+    <groupId>com.google.adk</groupId>
     <artifactId>google-adk-maven-plugin</artifactId>
+    <version>0.2.0</version>
     <packaging>maven-plugin</packaging>
     <name>Google ADK Maven Plugin</name>
     <description>Maven plugin for running Google ADK web server with custom agents</description>
@@ -31,11 +29,11 @@
             <artifactId>maven-plugin-api</artifactId>
             <version>${maven.version}</version>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
+            <dependency>
+                <groupId>com.google.adk</groupId>
+                <artifactId>google-adk</artifactId>
+                <version>0.2.0</version>
+            </dependency>
             <version>${maven.version}</version>
             <scope>provided</scope>
         </dependency>
