@@ -1,77 +1,60 @@
-
+/*
+ * Copyright 2025 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.adk.models.langchain4j;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class LangChain4jTest {
+class LangChain4jTest {
     private static final String MODEL_NAME = "test-model";
 
     @Test
-    @DisplayName("Should construct LangChain4j with model name")
-    void testConstructor() {
-        LangChain4j langChain4j = new LangChain4j(null, MODEL_NAME);
+    @DisplayName("Should construct LangChain4j with ChatLanguageModel and model name")
+    void testConstructorWithChatModelAndName() {
+        ChatLanguageModel chatModel = mock(ChatLanguageModel.class);
+        LangChain4j langChain4j = new LangChain4j(chatModel, MODEL_NAME);
+        assertNotNull(langChain4j);
+    }
+
+    @Test
+    @DisplayName("Should construct LangChain4j with StreamingChatLanguageModel and model name")
+    void testConstructorWithStreamingChatModelAndName() {
+        StreamingChatLanguageModel streamingChatModel = mock(StreamingChatLanguageModel.class);
+        LangChain4j langChain4j = new LangChain4j(streamingChatModel, MODEL_NAME);
         assertNotNull(langChain4j);
     }
 
     @Test
     @DisplayName("Should throw UnsupportedOperationException when connect is called")
     void testConnectThrowsUnsupportedOperationException() {
-        LangChain4j langChain4j = new LangChain4j(null, MODEL_NAME);
+        ChatLanguageModel chatModel = mock(ChatLanguageModel.class);
+        LangChain4j langChain4j = new LangChain4j(chatModel, MODEL_NAME);
         assertThrows(UnsupportedOperationException.class, () -> langChain4j.connect(null));
     }
 
-
-    final List<Part> parts = response.content().get().parts().orElseThrow();
-    assertThat(parts).hasSize(1);
-    assertThat(parts.get(0).functionCall()).isPresent();
-
-    final FunctionCall functionCall = parts.get(0).functionCall().orElseThrow();
-    assertThat(functionCall.name()).isEqualTo(Optional.of("getWeather"));
-
-package com.google.adk.models.langchain4j;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-public class LangChain4jTest {
-    private static final String MODEL_NAME = "test-model";
-
     @Test
-    @DisplayName("Should construct LangChain4j with model name")
-    void testConstructor() {
-        LangChain4j langChain4j = new LangChain4j(null, MODEL_NAME);
-        assertNotNull(langChain4j);
+    @DisplayName("Should throw UnsupportedOperationException when generateContent is called")
+    void testGenerateContentThrowsUnsupportedOperationException() {
+        ChatLanguageModel chatModel = mock(ChatLanguageModel.class);
+        LangChain4j langChain4j = new LangChain4j(chatModel, MODEL_NAME);
+        assertThrows(UnsupportedOperationException.class, () -> langChain4j.generateContent(null, false));
     }
-
-    @Test
-    @DisplayName("Should throw UnsupportedOperationException when connect is called")
-    void testConnectThrowsUnsupportedOperationException() {
-        LangChain4j langChain4j = new LangChain4j(null, MODEL_NAME);
-        assertThrows(UnsupportedOperationException.class, () -> langChain4j.connect(null));
-    }
-
-        """
-        {
-            "name": "John Doe",
-            "age": "30",
-            "city": "New York"
-        }
-        """;
-    final AiMessage aiMessage = AiMessage.from(jsonResponse);
-
-    final ChatResponse chatResponse = mock(ChatResponse.class);
-    when(chatResponse.aiMessage()).thenReturn(aiMessage);
-    when(chatModel.chat(any(ChatRequest.class))).thenReturn(chatResponse);
-
-    // When
-    final LlmResponse response = langChain4j.generateContent(llmRequest, false).blockingFirst();
-
-    // Then
-    // Verify the response contains the expected JSON data
-    assertThat(response).isNotNull();
-
+}

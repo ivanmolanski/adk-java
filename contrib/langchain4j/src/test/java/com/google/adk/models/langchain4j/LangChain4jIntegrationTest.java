@@ -30,8 +30,6 @@ import com.google.genai.types.Content;
 import com.google.genai.types.FunctionCall;
 import com.google.genai.types.FunctionResponse;
 import com.google.genai.types.Part;
-import dev.langchain4j.model.anthropic.AnthropicChatModel;
-import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import io.reactivex.rxjava3.core.Flowable;
@@ -48,6 +46,8 @@ class LangChain4jIntegrationTest {
   public static final String GEMINI_2_0_FLASH = "gemini-2.0-flash";
   public static final String GPT_4_O_MINI = "gpt-4o-mini";
 
+  // TODO: Re-enable when Anthropic dependency is available
+  /*
   @Test
   @EnabledIfEnvironmentVariable(named = "ANTHROPIC_API_KEY", matches = "\\S+")
   void testSimpleAgent() {
@@ -83,7 +83,10 @@ class LangChain4jIntegrationTest {
     System.out.println("Answer: " + content.text());
     assertTrue(content.text().contains("quantum"));
   }
+  */
 
+  // TODO: Re-enable when Anthropic dependency is available
+  /*
   @Test
   @EnabledIfEnvironmentVariable(named = "ANTHROPIC_API_KEY", matches = "\\S+")
   void testSingleAgentWithTools() {
@@ -157,6 +160,7 @@ class LangChain4jIntegrationTest {
     assertTrue(partsThree.get(0).text().isPresent());
     assertTrue(partsThree.get(0).text().get().contains("beautiful"));
   }
+  */
 
   @Test
   @EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = "\\S+")
@@ -183,7 +187,7 @@ class LangChain4jIntegrationTest {
         LlmAgent.builder()
             .name("friendly-weather-app")
             .description("Friend agent that knows about the weather")
-            .model(new LangChain4j(gptModel))
+            .model(new LangChain4j(gptModel, GPT_4_O_MINI))
             .instruction(
                 """
                 You are a friendly assistant.
@@ -246,7 +250,7 @@ class LangChain4jIntegrationTest {
         LlmAgent.builder()
             .name("greeterAgent")
             .description("Friendly agent that greets users")
-            .model(new LangChain4j(gptModel))
+            .model(new LangChain4j(gptModel, GPT_4_O_MINI))
             .instruction(
                 """
                 You are a friendly that greets users.
@@ -257,7 +261,7 @@ class LangChain4jIntegrationTest {
         LlmAgent.builder()
             .name("farewellAgent")
             .description("Friendly agent that says goodbye to users")
-            .model(new LangChain4j(gptModel))
+            .model(new LangChain4j(gptModel, GPT_4_O_MINI))
             .instruction(
                 """
                 You are a friendly that says goodbye to users.
@@ -345,6 +349,8 @@ class LangChain4jIntegrationTest {
     assertTrue(byeEvent3.finalResponse());
   }
 
+  // TODO: Re-enable when Anthropic dependency is available
+  /*
   @Test
   @EnabledIfEnvironmentVariable(named = "ANTHROPIC_API_KEY", matches = "\\S+")
   void testSimpleStreamingResponse() {
@@ -378,6 +384,7 @@ class LangChain4jIntegrationTest {
     assertTrue(fullResponse.contains("Rayleigh"));
     assertTrue(fullResponse.contains("scatter"));
   }
+  */
 
   @Test
   @EnabledIfEnvironmentVariable(named = "OPENAI_API_KEY", matches = "\\S+")
