@@ -18,14 +18,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>com.google.adk</groupId>
-        <artifactId>google-adk-parent</artifactId>
-        <version>0.2.1-SNAPSHOT</version><!-- {x-version-update:google-adk:current} -->
-        <relativePath>../../pom.xml</relativePath>
-    </parent>
-
+    <groupId>com.google.adk</groupId>
     <artifactId>google-adk-contrib-langchain4j</artifactId>
+    <version>0.2.0</version>
     <name>Agent Development Kit - Contributions - LangChain4j</name>
     <description>LangChain4j integration for the Agent Development Kit.</description>
 
@@ -34,8 +29,12 @@
         <google.genai.version>1.0.0</google.genai.version>
         <junit.version>5.11.4</junit.version>
         <mockito.version>5.17.0</mockito.version>
-        <langchain4j.version>1.1.0</langchain4j.version>
+        <langchain4j.version>0.25.0</langchain4j.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -62,8 +61,13 @@
         </dependency>
         <dependency>
             <groupId>com.google.adk</groupId>
+            <artifactId>core</artifactId>
+            <version>0.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.adk</groupId>
             <artifactId>google-adk</artifactId>
-            <version>${project.version}</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.adk</groupId>
@@ -84,22 +88,14 @@
         <!-- Test dependencies -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-anthropic</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-google-ai-gemini</artifactId>
+            <version>${langchain4j.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-ollama</artifactId>
+            <version>${langchain4j.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -136,4 +132,21 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                        <include>**/*TestCase.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
