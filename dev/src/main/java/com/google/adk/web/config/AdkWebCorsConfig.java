@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.context.annotation.Primary;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
@@ -43,6 +44,7 @@ import org.springframework.web.filter.CorsFilter;
 public class AdkWebCorsConfig {
 
   @Bean
+  @Primary
   public CorsConfigurationSource corsConfigurationSource(AdkWebCorsProperties corsProperties) {
     CorsConfiguration configuration = new CorsConfiguration();
 
@@ -59,7 +61,7 @@ public class AdkWebCorsConfig {
   }
 
   @Bean
-  public CorsFilter corsFilter(CorsConfigurationSource corsConfigurationSource) {
+  public CorsFilter corsFilter(@org.springframework.beans.factory.annotation.Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
     return new CorsFilter(corsConfigurationSource);
   }
 }
