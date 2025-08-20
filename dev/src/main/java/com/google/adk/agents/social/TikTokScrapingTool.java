@@ -22,11 +22,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.genai.types.FunctionDeclaration;
 import com.google.genai.types.Schema;
-import com.google.genai.types.Type;
 import io.reactivex.rxjava3.core.Single;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +37,12 @@ import org.slf4j.LoggerFactory;
 public class TikTokScrapingTool extends BaseTool {
 
   private static final Logger logger = LoggerFactory.getLogger(TikTokScrapingTool.class);
+
+  public TikTokScrapingTool() {
+    super(
+        "tiktok_scraper",
+        "Scrapes TikTok for viral aesthetics and beauty content, analyzing trending videos and hashtags");
+  }
 
   // TikTok hashtags and keywords related to aesthetics
   private static final List<String> AESTHETICS_KEYWORDS =
@@ -57,42 +63,34 @@ public class TikTokScrapingTool extends BaseTool {
           "glowingskin");
 
   @Override
-  public String name() {
-    return "tiktok_scraper";
+  public Optional<FunctionDeclaration> declaration() {
+    return Optional.of(
+        FunctionDeclaration.builder()
+            .name(name())
+            .description(description())
+            .parameters(
+                Schema.fromJson(
+                    """
+                {
+                  "type": "object",
+                  "properties": {
+                    "keyword": {
+                      "type": "string",
+                      "description": "Specific keyword to search for (optional, defaults to aesthetics-related keywords)"
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "description": "Maximum number of videos to analyze (default: 15)"
+                    }
+                  }
+                }
+                """))
+            .build());
   }
 
   @Override
-  public String description() {
-    return "Scrapes TikTok for viral aesthetics and beauty content, analyzing trending videos and hashtags";
-  }
-
-  @Override
-  public FunctionDeclaration getDeclaration() {
-    return FunctionDeclaration.builder()
-        .name(name())
-        .description(description())
-        .parameters(
-            Schema.builder()
-                .type(Type.OBJECT)
-                .properties(
-                    ImmutableMap.of(
-                        "keyword",
-                            Schema.builder()
-                                .type(Type.STRING)
-                                .description(
-                                    "Specific keyword to search for (optional, defaults to aesthetics-related keywords)")
-                                .build(),
-                        "limit",
-                            Schema.builder()
-                                .type(Type.INTEGER)
-                                .description("Maximum number of videos to analyze (default: 15)")
-                                .build()))
-                .build())
-        .build();
-  }
-
-  @Override
-  public Single<String> execute(ToolContext toolContext, Map<String, Object> parameters) {
+  public Single<Map<String, Object>> runAsync(
+      Map<String, Object> parameters, ToolContext toolContext) {
     String keyword = (String) parameters.getOrDefault("keyword", "skincare");
     int limit = ((Number) parameters.getOrDefault("limit", 15)).intValue();
 
@@ -102,10 +100,11 @@ public class TikTokScrapingTool extends BaseTool {
         () -> {
           try {
             List<TikTokVideo> videos = scrapeTikTokKeyword(keyword, limit);
-            return formatResults(videos);
+            String results = formatResults(videos);
+            return ImmutableMap.of("result", results);
           } catch (Exception e) {
             logger.error("Error scraping TikTok", e);
-            return "Error scraping TikTok: " + e.getMessage();
+            return ImmutableMap.of("error", "Error scraping TikTok: " + e.getMessage());
           }
         });
   }

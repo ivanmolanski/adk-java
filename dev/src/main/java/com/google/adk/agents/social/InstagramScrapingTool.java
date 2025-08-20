@@ -22,11 +22,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.genai.types.FunctionDeclaration;
 import com.google.genai.types.Schema;
-import com.google.genai.types.Type;
 import io.reactivex.rxjava3.core.Single;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +40,9 @@ public class InstagramScrapingTool extends BaseTool {
   private static final Logger logger = LoggerFactory.getLogger(InstagramScrapingTool.class);
 
   public InstagramScrapingTool() {
-    super("instagram_scraper", "Scrapes Instagram for viral aesthetics and beauty content, analyzing engagement metrics and trending hashtags");
+    super(
+        "instagram_scraper",
+        "Scrapes Instagram for viral aesthetics and beauty content, analyzing engagement metrics and trending hashtags");
   }
 
   // Instagram hashtags related to aesthetics
@@ -65,31 +67,33 @@ public class InstagramScrapingTool extends BaseTool {
 
   @Override
   public Optional<FunctionDeclaration> declaration() {
-    return Optional.of(FunctionDeclaration.builder()
-        .name(name())
-        .description(description())
-        .parameters(
-            Schema.builder()
-                .type(Schema.Type.OBJECT)
-                .properties(
-                    ImmutableMap.of(
-                        "hashtag",
-                            Schema.builder()
-                                .type(Schema.Type.STRING)
-                                .description(
-                                    "Specific hashtag to search for (optional, defaults to aesthetics-related tags)")
-                                .build(),
-                        "limit",
-                            Schema.builder()
-                                .type(Schema.Type.INTEGER)
-                                .description("Maximum number of posts to scrape (default: 20)")
-                                .build()))
-                .build())
-        .build());
+    return Optional.of(
+        FunctionDeclaration.builder()
+            .name(name())
+            .description(description())
+            .parameters(
+                Schema.fromJson(
+                    """
+                {
+                  "type": "object",
+                  "properties": {
+                    "hashtag": {
+                      "type": "string",
+                      "description": "Specific hashtag to search for (optional, defaults to aesthetics-related tags)"
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "description": "Maximum number of posts to scrape (default: 20)"
+                    }
+                  }
+                }
+                """))
+            .build());
   }
 
   @Override
-  public Single<Map<String, Object>> runAsync(Map<String, Object> parameters, ToolContext toolContext) {
+  public Single<Map<String, Object>> runAsync(
+      Map<String, Object> parameters, ToolContext toolContext) {
     String hashtag = (String) parameters.getOrDefault("hashtag", "aesthetics");
     int limit = ((Number) parameters.getOrDefault("limit", 20)).intValue();
 

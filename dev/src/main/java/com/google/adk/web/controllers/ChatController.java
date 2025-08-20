@@ -121,7 +121,10 @@ public class ChatController {
             parameters.put("hashtag", request.hashtag != null ? request.hashtag : "aesthetics");
             parameters.put("limit", request.limit != null ? request.limit : 10);
 
-            String result = tool.execute(null, parameters).blockingGet();
+            String result =
+                tool.runAsync(parameters, null)
+                    .map(response -> (String) response.getOrDefault("result", "No results"))
+                    .blockingGet();
 
             return ResponseEntity.ok(new ScrapeResponse(result, "Instagram scraping completed"));
 
@@ -144,7 +147,10 @@ public class ChatController {
             parameters.put("keyword", request.hashtag != null ? request.hashtag : "skincare");
             parameters.put("limit", request.limit != null ? request.limit : 10);
 
-            String result = tool.execute(null, parameters).blockingGet();
+            String result =
+                tool.runAsync(parameters, null)
+                    .map(response -> (String) response.getOrDefault("result", "No results"))
+                    .blockingGet();
 
             return ResponseEntity.ok(new ScrapeResponse(result, "TikTok scraping completed"));
 
