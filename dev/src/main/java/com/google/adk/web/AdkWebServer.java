@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.adk.JsonBaseModel;
 import com.google.adk.agents.BaseAgent;
+import com.google.adk.agents.LlmAgent;
 import com.google.adk.agents.LiveRequest;
 import com.google.adk.agents.LiveRequestQueue;
 import com.google.adk.agents.RunConfig;
@@ -155,8 +156,24 @@ public class AdkWebServer implements WebMvcConfigurer {
       AgentLoadingProperties props, RunnerService runnerService) {
     Map<String, BaseAgent> agents = new ConcurrentHashMap<>();
 
+    // Add default test agent for GUI demonstration
+    try {
+      BaseAgent testAgent = LlmAgent.builder()
+          .name("TestAssistant")
+          .description("A test agent for demonstrating the state-of-the-art GUI capabilities")
+          .model("gemini-2.0-flash-exp")
+          .instruction("You are a helpful test assistant designed to demonstrate the state-of-the-art ADK GUI. "
+                    + "You can help with questions about testing, development, and provide examples of various "
+                    + "conversational patterns. Be informative and engaging in your responses.")
+          .build();
+      agents.put("TestAssistant", testAgent);
+      log.info("Added default test agent: TestAssistant");
+    } catch (Exception e) {
+      log.warn("Failed to create test agent: {}", e.getMessage());
+    }
+
     if (props.getSourceDir() == null || props.getSourceDir().isEmpty()) {
-      log.info("adk.agents.source-dir not set. Initializing with an empty agent registry.");
+      log.info("adk.agents.source-dir not set. Using default test agent only.");
       return agents;
     }
 
@@ -578,24 +595,27 @@ public class AdkWebServer implements WebMvcConfigurer {
     } else {
       log.debug(
           "System property 'adk.web.ui.dir' or config 'adk.web.ui.dir' is not set. Mapping URL path"
-              + " /** to classpath:/browser/");
+              + " /** to classpath resources");
       registry
           .addResourceHandler("/**")
-          .addResourceLocations("classpath:/browser/")
+          .addResourceLocations("classpath:/browser/", "classpath:/static/")
           .setCachePeriod(0)
           .resourceChain(true);
     }
   }
 
   /**
-   * Configures simple automated controllers: - Redirects the root path "/" to "/dev-ui". - Forwards
+   * Configures simple automated controllers: - Redirects the root path "/" to "/enhanced-gui". - Forwards
    * requests to "/dev-ui" to "/dev-ui/index.html" so the ResourceHandler serves it.
+   * - Forwards requests to "/enhanced-gui" to the new state-of-the-art GUI.
    */
   @Override
   public void addViewControllers(ViewControllerRegistry registry) {
-    registry.addRedirectViewController("/", "/dev-ui");
+    registry.addRedirectViewController("/", "/enhanced-gui");
     registry.addViewController("/dev-ui").setViewName("forward:/index.html");
     registry.addViewController("/dev-ui/").setViewName("forward:/index.html");
+    registry.addViewController("/enhanced-gui").setViewName("forward:/enhanced-gui.html");
+    registry.addViewController("/enhanced-gui/").setViewName("forward:/enhanced-gui.html");
   }
 
   /** Spring Boot REST Controller handling agent-related API endpoints. */

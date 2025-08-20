@@ -5,7 +5,7 @@
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,55 +18,46 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
+
+
+
   <parent>
     <groupId>com.google.adk</groupId>
-    <artifactId>google-adk-parent</artifactId>
-    <version>0.2.1-SNAPSHOT</version><!-- {x-version-update:google-adk:current} -->
+    <artifactId>google-adk</artifactId>
+    <version>0.2.0</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
-
-  <artifactId>google-adk-dev</artifactId>
+  <artifactId>dev</artifactId>
   <name>Agent Development Kit - Dev Tools</name>
   <description>Development tools and server for Agent Development Kit.</description>
 
   <properties>
     <graphviz.version>0.18.1</graphviz.version>
     <ecj.version>3.41.0</ecj.version>
+    <spring-boot.version>3.3.0</spring-boot.version>
   </properties>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.opentelemetry</groupId>
-        <artifactId>opentelemetry-bom</artifactId>
-        <version>${otel.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
+
+  <!-- No additional dependencyManagement needed; inherited from parent. -->
   <dependencies>
     <dependency>
       <groupId>com.google.adk</groupId>
-      <artifactId>google-adk</artifactId>
-      <version>0.2.1-SNAPSHOT</version><!-- {x-version-update:google-adk:current} -->
+      <artifactId>core</artifactId>
+      <version>0.2.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
+      <version>3.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-websocket</artifactId>
+      <version>3.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
+      <version>3.3.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -82,61 +73,57 @@
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-sdk-common</artifactId>
+      <version>${opentelemetry.api.version}</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-api</artifactId>
+      <version>${opentelemetry.api.version}</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-sdk</artifactId>
+      <version>${opentelemetry.api.version}</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-exporter-otlp</artifactId>
+      <version>${opentelemetry.api.version}</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-sdk-logs</artifactId>
+      <version>${opentelemetry.api.version}</version>
     </dependency>
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-sdk-trace</artifactId>
+      <version>${opentelemetry.api.version}</version>
     </dependency>
   </dependencies>
   <build>
     <resources>
       <resource>
         <directory>browser</directory>
-        <!-- This will place the contents of the 'browser' folder into 'BOOT-INF/classes/browser/'
-        in the JAR -->
         <targetPath>browser</targetPath>
       </resource>
     </resources>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>${spring-boot.version}</version>
-          <executions>
-            <execution>
-              <id>repackage</id>
-              <goals>
-                <goal>repackage</goal>
-              </goals>
-              <configuration>
-                <classifier>exec</classifier>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>${spring-boot.version}</version>
+        <executions>
+          <execution>
+            <id>repackage</id>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+            <configuration>
+              <classifier>exec</classifier>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
