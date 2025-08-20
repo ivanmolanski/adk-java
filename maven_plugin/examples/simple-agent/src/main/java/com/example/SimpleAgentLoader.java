@@ -24,7 +24,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.NoSuchElementException;
-import java.util.function.Supplier;
+import com.google.common.base.Supplier;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.ThreadSafe;
 
