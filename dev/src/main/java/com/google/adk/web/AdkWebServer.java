@@ -91,6 +91,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -120,7 +121,14 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @SpringBootApplication
 @ConfigurationPropertiesScan
-@ComponentScan(basePackages = {"com.google.adk.web", "com.google.adk.web.config"})
+@ComponentScan(
+    basePackages = {
+      "com.google.adk.web",
+      "com.google.adk.web.config",
+      "com.google.adk.services",
+      "com.google.adk.agents.social"
+    })
+@EnableScheduling
 public class AdkWebServer implements WebMvcConfigurer {
 
   private static final Logger log = LoggerFactory.getLogger(AdkWebServer.class);

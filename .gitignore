@@ -1,2 +1,10 @@
 target/
 .idea
+
+# Firebase configuration
+firebase-service-account.json
+.env
+*.env
+
+# Email credentials
+email.properties
