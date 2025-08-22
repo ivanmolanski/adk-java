@@ -61,16 +61,11 @@
         <dependency>
             <groupId>com.google.adk</groupId>
             <artifactId>core</artifactId>
-            <version>0.2.0</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.adk</groupId>
-            <artifactId>google-adk</artifactId>
-            <version>0.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.adk</groupId>
-            <artifactId>google-adk-dev</artifactId>
+            <artifactId>dev</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

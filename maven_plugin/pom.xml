@@ -4,9 +4,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-
-
-
     <groupId>com.google.adk</groupId>
     <artifactId>google-adk-maven-plugin</artifactId>
     <version>0.2.0</version>
@@ -20,6 +17,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.version>3.9.0</maven.version>
+        <firebase-admin.version>9.5.0</firebase-admin.version>
     </properties>
 
     <dependencies>
@@ -48,9 +46,17 @@
         <!-- ADK Dependencies -->
         <dependency>
             <groupId>com.google.adk</groupId>
-            <artifactId>google-adk</artifactId>
+            <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- dev dependency commented out until needed -->
+        <!--
+        <dependency>
+            <groupId>com.google.adk</groupId>
+            <artifactId>dev</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        -->
 
         <!-- Spring Boot Dependencies -->
         <dependency>
@@ -84,6 +90,33 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+        <!-- Spring Security Dependencies (commented out until needed) -->
+        <!--
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <version>3.4.0</version>
+        </dependency>
+        -->
+
+        <!-- Firebase Dependencies (commented out until needed) -->
+        <!--
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>${firebase-admin.version}</version>
+        </dependency>
+        -->
+
+        <!-- JavaMail Dependencies (commented out until needed) -->
+        <!--
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+            <version>3.4.0</version>
+        </dependency>
+        -->
 
         <!-- Simple logging for Maven plugin -->
         <dependency>
@@ -135,6 +168,19 @@
             <groupId>com.google.genai</groupId>
             <artifactId>google-genai</artifactId>
             <version>1.12.0</version>
+        </dependency>
+
+        <!-- Additional commonly used dependencies -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.4.8-jre</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version>
         </dependency>
     </dependencies>
 
