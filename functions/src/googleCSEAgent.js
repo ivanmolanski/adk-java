@@ -10,7 +10,7 @@ const firestore = new Firestore({
   projectId: 'contentforge-ai-ygy25',
   keyFilename: serviceAccountPath
 });
-const GOOGLE_CSE_KEY = process.env.GOOGLE_CSE_KEY || 'AIzaSyDU52kV6fb8_Wv7TtJbCq1UHuJseVNf6Ug';
+const GOOGLE_CSE_KEY = process.env.GOOGLE_CSE_KEY || '';
 const GOOGLE_CSE_CX = process.env.GOOGLE_CSE_CX || '9563294497ffb46ac'; // Set to your CSE CX
 
 const searchTerms = [

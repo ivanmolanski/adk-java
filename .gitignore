@@ -1,3 +1,20 @@
 target/
 .idea
 node_modules
+
+# Security - Never commit sensitive files
+service-account.json
+*.pem
+*.key
+.env.local
+.env.production.local
+.env.development.local
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
