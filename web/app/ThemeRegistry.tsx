@@ -1,9 +1,9 @@
 'use client';
 
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
+// import { ThemeProvider } from '@mui/material/styles';
+// import CssBaseline from '@mui/material/CssBaseline';
 import { ReactNode, useState, createContext, useContext, useEffect } from 'react';
-import { lightTheme, darkTheme } from '../config/theme';
+// import { lightTheme, darkTheme } from '../config/theme';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -60,7 +60,7 @@ export default function ThemeRegistry({ children }: { children: ReactNode }) {
     }
   }, [mode, isMounted]);
 
-  const theme = mode === 'light' ? lightTheme : darkTheme;
+  // const theme = mode === 'light' ? lightTheme : darkTheme;
 
   const toggleThemeMode = () => {
     setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
@@ -73,10 +73,9 @@ export default function ThemeRegistry({ children }: { children: ReactNode }) {
 
   return (
     <ThemeModeContext.Provider value={{ toggleThemeMode, mode }}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
+      <div className={mode}>
         {children}
-      </ThemeProvider>
+      </div>
     </ThemeModeContext.Provider>
   );
 }

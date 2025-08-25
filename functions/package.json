@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "type": "commonjs",
   "engines": {
-    "node": "22"
+    "node": ">=20"
   },
   "scripts": {
     "build": "tsc",
@@ -16,16 +16,16 @@
     "logs": "firebase functions:log"
   },
   "dependencies": {
-    "@google-cloud/firestore": "latest",
-    "@google-cloud/pubsub": "latest",
-    "firebase-admin": "latest",
-    "firebase-functions": "latest",
-    "apify-client": "latest",
-    "googleapis": "latest"
+    "@google-cloud/firestore": "^7.10.0",
+    "@google-cloud/pubsub": "^4.8.0",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.0.1",
+    "apify-client": "^2.11.0",
+    "googleapis": "^144.0.0"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "typescript": "latest",
-    "firebase-functions-test": "latest"
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3",
+    "firebase-functions-test": "^3.3.0"
   }
 }
