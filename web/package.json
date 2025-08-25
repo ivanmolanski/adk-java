@@ -1,16 +1,25 @@
 {
   "name": "web",
-  "version": "1.0.0",
+  "version": "",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev -p 3000",
+    "dev:turbo": "next dev --turbopack -p 3000",
+    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "build": "NEXT_PUBLIC_BUILD_TIME=$(date +%s) next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@emotion/react": "latest",
     "@emotion/styled": "latest",
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
+    "@genkit-ai/firebase": "latest",
+    "@genkit-ai/googleai": "latest",
+    "@genkit-ai/next": "latest",
+    "@google/generative-ai": "latest",
     "@mui/icons-material": "latest",
     "@mui/material": "latest",
     "@mui/x-data-grid": "latest",
@@ -35,7 +44,8 @@
     "react": "latest",
     "react-dom": "latest",
     "sonner": "latest",
-    "tailwind-merge": "latest"
+    "tailwind-merge": "latest",
+    "web": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
