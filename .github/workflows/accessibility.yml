@@ -1,0 +1,77 @@
+name: Accessibility Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        
+    - name: Install dependencies
+      run: |
+        cd web
+        npm install
+        npm install jest-axe @axe-core/react chroma-js
+        
+    - name: Run accessibility tests
+      run: |
+        cd web
+        npm test accessibility.test.ts -- --json --outputFile=test-results.json
+        
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: ${{ always() }}
+      with:
+        name: accessibility-test-results
+        path: web/test-results.json
+        
+    - name: Notify Slack
+      if: ${{ failure() }}
+      uses: slackapi/slack-github-action@v1.23.0
+      with:
+        payload: |
+          {
+            "text": "Accessibility tests failed in ${{ github.workflow }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*Accessibility Test Failure*"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Repository:*\n${{ github.repository }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Workflow:*\n${{ github.workflow }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Branch:*\n${{ github.ref }}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Commit:*\n${{ github.sha }}"
+                  }
+                ]
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

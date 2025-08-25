@@ -1,0 +1,31 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions for viral scraper and integration",
+  "main": "lib/index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "deploy": "firebase deploy --only functions",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "latest",
+    "@google-cloud/pubsub": "latest",
+    "firebase-admin": "latest",
+    "firebase-functions": "latest",
+    "apify-client": "latest",
+    "googleapis": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest",
+    "firebase-functions-test": "latest"
+  }
+}
