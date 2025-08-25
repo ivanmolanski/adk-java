@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "date-fns": "Latest",
+    "firebase": "Latest",
+    "puppeteer-cluster": "Latest"
+  }
+}

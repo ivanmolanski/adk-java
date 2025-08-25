@@ -1,0 +1,2 @@
+mvnw.cmd text eol=crlf
+jdk-22/jdk-22.0.2/lib/modules filter=lfs diff=lfs merge=lfs -text

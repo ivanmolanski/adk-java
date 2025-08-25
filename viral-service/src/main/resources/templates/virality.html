@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virality - MD Aesthetics AI Content Hub</title>
+    
+    <!-- Backend AI Integration: all model calls proxied via /api/ai/chat -->
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .analytics-toggle {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .analytics-toggle:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        /* Analytics Bar */
+        .analytics-bar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: none;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .analytics-bar.show {
+            display: block;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Main Content Layout */
+        .chat-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+        }
+
+        .chat-container {
+            height: 400px;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #eee;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-message {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .ai-message {
+            background: #f8f9fa;
+            color: #333;
+            border: 1px solid #e9ecef;
+        }
+
+        .message-content {
+            margin-bottom: 10px;
+        }
+
+        .citations {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+
+        .citation-link {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+
+        .input-section {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #messageInput {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            resize: none;
+            min-height: 50px;
+            max-height: 150px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #messageInput:focus {
+            border-color: #667eea;
+        }
+
+        .input-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .mic-button {
+            background: #28a745;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mic-button.recording {
+            background: #dc3545;
+            animation: pulse 1s infinite;
+        }
+
+        .upload-button {
+            background: #17a2b8;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #imageInput {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .posting-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        .posting-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .posting-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .social-connections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .connection-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+
+        .connection-card.connected {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .connection-status {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .connected {
+            color: #28a745;
+        }
+
+        .disconnected {
+            color: #dc3545;
+        }
+
+        .post-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .platform-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-tiktok {
+            background: #000;
+            color: white;
+        }
+
+        .btn-instagram {
+            background: linear-gradient(135deg, #833AB4, #FD1D1D, #FCB045);
+            color: white;
+        }
+
+        .image-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .preview-item {
+            position: relative;
+            display: inline-block;
+        }
+
+        .preview-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .social-connections {
+                grid-template-columns: 1fr;
+            }
+            
+            .platform-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .analytics-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+        <div class="container">
+        <!-- Header with Analytics Toggle -->
+        <div class="header">
+            <div class="logo">Virality - MD Aesthetics AI</div>
+            <button class="analytics-toggle" onclick="toggleAnalytics()">
+                📊 Analytics
+            </button>
+        </div>
+
+        <!-- Analytics Bar (Hidden by default) -->
+        <div class="analytics-bar" id="analyticsBar">
+            <div class="analytics-grid">
+                <div class="metric">
+                    <div class="metric-value" id="totalPosts">--</div>
+                    <div class="metric-label">Total Posts</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="totalEngagement">--</div>
+                    <div class="metric-label">Total Engagement</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="avgEngagement">--</div>
+                    <div class="metric-label">Avg Engagement Rate</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="topPlatform">--</div>
+                    <div class="metric-label">Top Platform</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="thisWeek">--</div>
+                    <div class="metric-label">This Week</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Virality AI Chat -->
+        <div class="chat-section">
+            <div class="chat-header">
+                <h1>🤖 Virality AI Assistant</h1>
+                <p>Your intelligent partner for viral content creation and social media strategy</p>
+            </div>
+            
+            <div class="chat-container" id="chatContainer">
+                <div class="message ai-message">
+                    <div class="message-content">
+                        👋 Welcome to Virality! I'm your MD Aesthetics AI assistant specialized in viral content analysis and creation. 
+                        
+                        I can help you:
+                        • 🎯 Analyze trending content in aesthetics industry
+                        • ✍️ Create engaging posts for TikTok and Instagram  
+                        • 🔍 Research competitor strategies
+                        • 📈 Optimize hashtags and timing
+                        • 🖼️ Analyze images and provide content suggestions
+                        
+                        How can I help you create viral content today?
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-section">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea id="messageInput" placeholder="Ask about viral content, social media strategies, or upload images for analysis..." rows="2"></textarea>
+                        <div class="image-preview" id="imagePreview"></div>
+                    </div>
+                    <div class="input-buttons">
+                        <button class="btn mic-button" id="micButton" onclick="toggleSpeechRecognition()" title="Voice input">
+                            🎤
+                        </button>
+                        <label for="imageInput" class="btn upload-button" title="Upload images">
+                            📁
+                            <input type="file" id="imageInput" multiple accept="image/*" onchange="handleImageUpload(event)">
+                        </label>
+                        <button class="btn btn-primary" onclick="sendMessage()" id="sendButton">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Media Posting Section -->
+        <div class="posting-section">
+            <div class="posting-header">
+                <h2>📱 Post Your Content</h2>
+                <p>Create and publish content across your social media platforms</p>
+            </div>
+
+            <!-- Social Media Connections -->
+            <div class="social-connections">
+                <div class="connection-card" id="tiktokConnection">
+                    <h3>TikTok</h3>
+                    <div class="connection-status disconnected" id="tiktokStatus">
+                        Checking connection...
+                    </div>
+                    <div id="tiktokActions">
+                        <a href="/oauth2/authorization/tiktok" class="btn btn-tiktok">Connect TikTok</a>
+                    </div>
+                </div>
+                
+                <div class="connection-card" id="instagramConnection">
+                    <h3>Instagram</h3>
+                    <div class="connection-status disconnected" id="instagramStatus">
+                        Checking connection...
+                    </div>
+                    <div id="instagramActions">
+                        <a href="/oauth2/authorization/instagram" class="btn btn-instagram">Connect Instagram</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Post Creation Form -->
+            <div class="post-form">
+                <div class="form-group">
+                    <label for="postContent">Content</label>
+                    <textarea id="postContent" class="form-control" placeholder="Write your viral post content here... (AI can help generate this above!)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="postHashtags">Hashtags</label>
+                    <input type="text" id="postHashtags" class="form-control" placeholder="#mdaesthetics, #torontoaesthetics, #skincare, #aesthetics" value="#mdaesthetics, #torontoaesthetics, #skincare">
+                </div>
+                
+                <div class="form-group">
+                    <label for="postMedia">Media Files (optional)</label>
+                    <input type="file" id="postMedia" class="form-control" multiple accept="image/*,video/*">
+                    <small style="color: #666; font-size: 12px;">Upload images or videos for your post</small>
+                </div>
+                
+                <div class="platform-buttons">
+                    <button class="btn btn-tiktok" onclick="publishPost('tiktok')" id="tiktokPostBtn">
+                        📱 Post to TikTok
+                    </button>
+                    <button class="btn btn-instagram" onclick="publishPost('instagram')" id="instagramPostBtn">
+                        📷 Post to Instagram
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Backend AI Configuration (no API keys exposed client-side)
+        let currentChat; // abstraction to mirror previous interface
+        let selectedImages = [];
+        let isRecording = false;
+        let recognition;
+
+        async function initializeAI() {
+            try {
+                console.log("Initializing backend AI chat interface...");
+                // Provide a lightweight wrapper so downstream code can call currentChat.sendMessage(parts)
+                currentChat = {
+                    sendMessage: async function(parts) {
+                        const userText = (parts || []).map(p => p.text).filter(Boolean).join("\n\n");
+                        const history = collectHistory();
+                        const resp = await fetch('/api/ai/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ history, prompt: userText })
+                        });
+                        if (!resp.ok) {
+                            const txt = await resp.text();
+                            throw new Error('Backend AI error: ' + txt);
+                        }
+                        const data = await resp.json();
+                        return {
+                            response: {
+                                text: () => data.response || '(empty)',
+                                candidates: []
+                            }
+                        };
+                    }
+                };
+                
+                // Update the initial AI message to show success
+                const aiMessages = document.querySelectorAll('.ai-message .message-content');
+                if (aiMessages.length > 0) {
+                    aiMessages[0].innerHTML = `
+                        ✅ <strong>AI Connected!</strong> Welcome to Virality! I'm your MD Aesthetics AI assistant specialized in viral content analysis and creation. 
+                        
+                        I can help you:
+                        • 🎯 Analyze trending content in aesthetics industry
+                        • ✍️ Create engaging posts for TikTok and Instagram  
+                        • 🔍 Research competitor strategies
+                        • 📈 Optimize hashtags and timing
+                        • 🖼️ Analyze images and provide content suggestions
+                        
+                        How can I help you create viral content today?
+                    `;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error("Failed to initialize AI (backend mode):", error);
+                
+                // Update initial message to show error details
+                const aiMessages = document.querySelectorAll('.ai-message .message-content');
+                if (aiMessages.length > 0) {
+                    aiMessages[0].innerHTML = `
+                        ⚠️ <strong>AI Connection Issue</strong><br>
+                        
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                            <strong>Error Details:</strong> ${error.message}<br>
+                            <small>This might be due to:</small>
+                            <ul style="margin: 5px 0; padding-left: 20px; font-size: 12px;">
+                                <li>Firebase AI service not enabled in your project</li>
+                                <li>API key missing required permissions</li>
+                                <li>Network connectivity issues</li>
+                                <li>Browser compatibility problems</li>
+                            </ul>
+                        </div>
+                        
+                        <strong>🔄 Running in Demo Mode</strong><br>
+                        I can still help you with basic content creation, but full AI features require proper Firebase configuration.
+                    `;
+                }
+                
+                // Fallback: Use a mock AI response system
+                console.log("Initializing fallback AI system (demo mode)...");
+                currentChat = {
+                    sendMessage: async function(parts) {
+                        // Simulate API delay
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        // Get user message text
+                        const userText = Array.isArray(parts) ? parts[0]?.text || '' : '';
+                        
+                        // Generate contextual responses based on keywords
+                        let response = "I'm running in demo mode due to Firebase AI connection issues. ";
+                        
+                        if (userText.toLowerCase().includes('tiktok')) {
+                            response += "For TikTok content, focus on:\n• Quick 15-30 second videos\n• Trending sounds and effects\n• Before/after transformations\n• Educational content about treatments\n• Use hashtags like #medspa #torontoaesthetics #skincare";
+                        } else if (userText.toLowerCase().includes('instagram')) {
+                            response += "For Instagram content, try:\n• High-quality images and reels\n• Behind-the-scenes content\n• Client testimonials\n• Educational carousel posts\n• Stories with polls and Q&A";
+                        } else if (userText.toLowerCase().includes('hashtag')) {
+                            response += "Recommended hashtags for MD Aesthetics:\n• Local: #torontoaesthetics #whitbymedspa #durhamregion\n• Treatment: #skintyte #ultherapy #radiesse #duoclift\n• Industry: #medspa #aesthetics #nonsurgical #skincare";
+                        } else {
+                            response += "I can help you create viral content for MD Aesthetics! Try asking me about:\n\n• TikTok content strategies\n• Instagram post ideas\n• Hashtag recommendations\n• Treatment-specific content\n• Competitor analysis\n\n(Note: Full AI features will be available once Firebase AI is properly configured)";
+                        }
+                        
+                        return {
+                            response: {
+                                text: function() {
+                                    return response;
+                                },
+                                candidates: []
+                            }
+                        };
+                    }
+                };
+                
+                return false;
+            }
+        }
+
+        // Initialize AI on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAI();
+            checkSocialMediaConnections();
+            loadAnalytics();
+            setupSpeechRecognition();
+            
+            // Auto-focus message input
+            document.getElementById('messageInput').focus();
+            
+            // Enter key handling
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        // Chat Functions
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message && selectedImages.length === 0) return;
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.innerHTML = '<span class="spinner"></span>Sending...';
+            
+            // Add user message
+            if (message) {
+                addMessage('user', message);
+            }
+            
+            if (selectedImages.length > 0) {
+                addMessage('user', `📎 Uploaded ${selectedImages.length} image(s) for analysis`);
+            }
+            
+            try {
+                let parts = [];
+                
+                if (message) parts.push({ text: message });
+                
+                // Add images if any
+                for (const image of selectedImages) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: image.type,
+                            data: image.data
+                        }
+                    });
+                }
+                
+                const result = await currentChat.sendMessage(parts);
+                const response = await result.response;
+                const text = response.text();
+                
+                // Handle grounding metadata for citations
+                let citations = [];
+                if (response.candidates && response.candidates[0] && response.candidates[0].groundingMetadata) {
+                    citations = response.candidates[0].groundingMetadata.searchEntryPoints || [];
+                }
+                
+                addMessage('ai', text, citations);
+                
+            } catch (error) {
+                console.error("Error sending message:", error);
+                addMessage('ai', "Sorry, I encountered an error processing your request. Please try again.");
+            } finally {
+                sendButton.disabled = false;
+                sendButton.innerHTML = 'Send';
+                input.value = '';
+                clearImages();
+                input.focus();
+            }
+        }
+
+        // Collect plain chat history (user/AI text) for contextual backend calls
+        function collectHistory() {
+            const container = document.getElementById('chatContainer');
+            const msgs = Array.from(container.querySelectorAll('.message'));
+            return msgs.map(m => m.querySelector('.message-content')?.innerText || '').filter(t => !!t).slice(-10); // last 10 messages
+        }
+
+        function addMessage(sender, content, citations = []) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            let citationsHtml = '';
+            if (citations && citations.length > 0) {
+                citationsHtml = '<div class="citations">Sources: ';
+                citations.forEach((citation, index) => {
+                    if (citation.sdkBlob && citation.sdkBlob.uri) {
+                        citationsHtml += `<a href="${citation.sdkBlob.uri}" target="_blank" class="citation-link">[${index + 1}]</a>`;
+                    }
+                });
+                citationsHtml += '</div>';
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+                ${citationsHtml}
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Image Upload Functions
+        function handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageData = e.target.result.split(',')[1]; // Remove data URL prefix
+                        selectedImages.push({
+                            name: file.name,
+                            type: file.type,
+                            data: imageData,
+                            url: e.target.result
+                        });
+                        displayImagePreviews();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Clear the input
+            event.target.value = '';
+        }
+
+        function displayImagePreviews() {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            
+            selectedImages.forEach((image, index) => {
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'preview-item';
+                previewDiv.innerHTML = `
+                    <img src="${image.url}" alt="${image.name}" class="preview-image">
+                    <button class="remove-image" onclick="removeImage(${index})" title="Remove image">×</button>
+                `;
+                preview.appendChild(previewDiv);
+            });
+        }
+
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            displayImagePreviews();
+        }
+
+        function clearImages() {
+            selectedImages = [];
+            displayImagePreviews();
+        }
+
+        // Speech Recognition Functions
+        function setupSpeechRecognition() {
+            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                
+                recognition.onresult = function(event) {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    document.getElementById('messageInput').value = transcript;
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    stopRecording();
+                };
+                
+                recognition.onend = function() {
+                    stopRecording();
+                };
+            } else {
+                document.getElementById('micButton').style.display = 'none';
+            }
+        }
+
+        function toggleSpeechRecognition() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            if (recognition) {
+                recognition.start();
+                isRecording = true;
+                const micButton = document.getElementById('micButton');
+                micButton.classList.add('recording');
+                micButton.title = 'Stop recording';
+            }
+        }
+
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+                isRecording = false;
+                const micButton = document.getElementById('micButton');
+                micButton.classList.remove('recording');
+                micButton.title = 'Voice input';
+            }
+        }
+
+        // Social Media Functions
+        async function checkSocialMediaConnections() {
+            try {
+                const response = await fetch('/api/social/status');
+                if (response.ok) {
+                    const authStatus = await response.json();
+                    updateConnectionStatus('tiktok', authStatus.tiktok);
+                    updateConnectionStatus('instagram', authStatus.instagram);
+                } else {
+                    // If endpoint doesn't exist, show default state
+                    updateConnectionStatus('tiktok', { connected: false });
+                    updateConnectionStatus('instagram', { connected: false });
+                }
+            } catch (error) {
+                console.error('Error checking social media connections:', error);
+                updateConnectionStatus('tiktok', { connected: false });
+                updateConnectionStatus('instagram', { connected: false });
+            }
+        }
+
+        function updateConnectionStatus(platform, status) {
+            const statusElement = document.getElementById(platform + 'Status');
+            const actionsElement = document.getElementById(platform + 'Actions');
+            const cardElement = document.getElementById(platform + 'Connection');
+            
+            if (status.connected) {
+                statusElement.textContent = 'Connected';
+                statusElement.className = 'connection-status connected';
+                cardElement.classList.add('connected');
+                actionsElement.innerHTML = `
+                    <p style="font-size: 12px; color: #666; margin: 10px 0;">
+                        ${status.profile ? `Connected as: ${status.profile.username || status.profile.displayName}` : 'Connected'}
+                    </p>
+                    <button class="btn btn-secondary" onclick="disconnect('${platform}')">Disconnect</button>
+                `;
+            } else {
+                statusElement.textContent = 'Not Connected';
+                statusElement.className = 'connection-status disconnected';
+                cardElement.classList.remove('connected');
+                const platformName = platform.charAt(0).toUpperCase() + platform.slice(1);
+                actionsElement.innerHTML = `<a href="/oauth2/authorization/${platform}" class="btn btn-${platform}">Connect ${platformName}</a>`;
+            }
+        }
+
+        async function disconnect(platform) {
+            try {
+                const response = await fetch(`/api/social/disconnect/${platform}`, { method: 'POST' });
+                if (response.ok) {
+                    updateConnectionStatus(platform, { connected: false });
+                } else {
+                    alert('Failed to disconnect from ' + platform);
+                }
+            } catch (error) {
+                console.error('Error disconnecting:', error);
+                alert('Error disconnecting from ' + platform);
+            }
+        }
+
+        // Publishing Functions
+        async function publishPost(platform) {
+            const content = document.getElementById('postContent').value.trim();
+            const hashtags = document.getElementById('postHashtags').value.trim();
+            const mediaFiles = document.getElementById('postMedia').files;
+            
+            if (!content) {
+                alert('Please enter post content');
+                return;
+            }
+            
+            const button = document.getElementById(platform + 'PostBtn');
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>Publishing...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('content', content);
+                formData.append('hashtags', hashtags);
+                
+                for (let i = 0; i < mediaFiles.length; i++) {
+                    formData.append('media', mediaFiles[i]);
+                }
+                
+                const response = await fetch(`/api/social/post/${platform}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Successfully posted to ${platform}!`);
+                    clearPostForm();
+                    loadAnalytics(); // Refresh analytics
+                } else {
+                    const error = await response.text();
+                    alert(`Failed to post to ${platform}: ${error}`);
+                }
+            } catch (error) {
+                console.error('Error publishing post:', error);
+                alert(`Error posting to ${platform}: ${error.message}`);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = platform === 'tiktok' ? '📱 Post to TikTok' : '📷 Post to Instagram';
+            }
+        }
+
+        function clearPostForm() {
+            document.getElementById('postContent').value = '';
+            document.getElementById('postHashtags').value = '#mdaesthetics, #torontoaesthetics, #skincare';
+            document.getElementById('postMedia').value = '';
+        }
+
+        // Analytics Functions
+        function toggleAnalytics() {
+            const analyticsBar = document.getElementById('analyticsBar');
+            analyticsBar.classList.toggle('show');
+        }
+
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/api/analytics/summary');
+                if (response.ok) {
+                    const analytics = await response.json();
+                    updateAnalyticsDisplay(analytics);
+                } else {
+                    // Show placeholder data if endpoint doesn't exist
+                    updateAnalyticsDisplay({
+                        totalPosts: 0,
+                        totalEngagement: 0,
+                        avgEngagementRate: '0%',
+                        topPlatform: 'N/A',
+                        thisWeekPosts: 0
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                updateAnalyticsDisplay({
+                    totalPosts: 0,
+                    totalEngagement: 0,
+                    avgEngagementRate: '0%',
+                    topPlatform: 'N/A',
+                    thisWeekPosts: 0
+                });
+            }
+        }
+
+        function updateAnalyticsDisplay(analytics) {
+            document.getElementById('totalPosts').textContent = analytics.totalPosts || 0;
+            document.getElementById('totalEngagement').textContent = analytics.totalEngagement || 0;
+            document.getElementById('avgEngagement').textContent = analytics.avgEngagementRate || '0%';
+            document.getElementById('topPlatform').textContent = analytics.topPlatform || 'N/A';
+            document.getElementById('thisWeek').textContent = analytics.thisWeekPosts || 0;
+        }
+    </script>
+</body>
+</html>
+</html>
