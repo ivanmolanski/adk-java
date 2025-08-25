@@ -1,8 +1,8 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/command-center/page": "app/command-center/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
   "/content-studio/page": "app/content-studio/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js",
   "/research/page": "app/research/page.js"
