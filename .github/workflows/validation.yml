@@ -40,5 +40,26 @@ jobs:
       - name: Compile and test (all) modules with Java ${{ matrix.java-version }}
         run: ./mvnw clean test
 
+      - name: Set up Node.js 22 for Functions build
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: Cache functions Node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            functions/node_modules
+          key: ${{ runner.os }}-node-functions-${{ hashFiles('functions/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-functions-
+
+      - name: Install functions dependencies
+        run: npm --prefix functions ci
+
+      - name: Build Cloud Functions (TypeScript)
+        run: npm --prefix functions run build
+
       - name: Detected wrongly formatted files
         run: git status && git diff --exit-code

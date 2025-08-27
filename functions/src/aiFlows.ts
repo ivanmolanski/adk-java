@@ -1,6 +1,11 @@
 // Genkit AI integration for real Gemini model calls (safety disabled per project directive)
-import { genkit } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+/*
+  NOTE: genkit and @genkit-ai/googleai are optional runtime dependencies in some environments.
+  We defer requiring them until runtime to avoid build-time errors in environments where they're
+  not installed (for example during CI or when running only the web build). This file will
+  throw a clear runtime error if GEMINI_API_KEY is provided but the packages are missing.
+*/
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { z } from 'zod';
 import { logger } from 'firebase-functions/v2';
 import { Firestore } from '@google-cloud/firestore';
@@ -14,8 +19,26 @@ function getAI(apiKey?: string) {
     if (!key) {
       throw new Error('GEMINI_API_KEY environment variable is required for Gemini model access.');
     }
-    ai = genkit({
-      plugins: [googleAI({ apiKey: key })],
+
+    // Dynamically require genkit and the googleAI plugin so missing modules don't break the
+    // static type-check/build step. Provide a clear error if they're absent at runtime.
+    let genkitLib: any;
+    let googleAIPlugin: any;
+    try {
+      // Use require to avoid top-level import resolution at build time
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      genkitLib = require('genkit');
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      googleAIPlugin = require('@genkit-ai/googleai');
+      // plugin export may be default or named
+      googleAIPlugin = googleAIPlugin?.googleAI || googleAIPlugin?.default || googleAIPlugin;
+    } catch (e:any) {
+      throw new Error('Missing runtime dependency: genkit and/or @genkit-ai/googleai are not installed. Install them to enable Gemini model support.');
+    }
+
+    // Initialize genkit with the googleAI plugin
+    ai = (typeof genkitLib === 'function' ? genkitLib : genkitLib.genkit)({
+      plugins: [googleAIPlugin({ apiKey: key })],
     });
   }
   return ai;
