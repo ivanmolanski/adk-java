@@ -1,0 +1,9 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/command-center/page": "/command-center",
+  "/dashboard/page": "/dashboard",
+  "/page": "/",
+  "/content-studio/page": "/content-studio",
+  "/research/page": "/research"
+}
