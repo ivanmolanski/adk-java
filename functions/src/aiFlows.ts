@@ -8,7 +8,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { z } from 'zod';
 import { logger } from 'firebase-functions/v2';
-import { Firestore } from '@google-cloud/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Defer AI initialization until first use (Firebase secrets not available at build time)
 let ai: any = null;
@@ -84,7 +84,7 @@ async function generateJson(prompt: string, schemaHint: string, maxRetries = 2, 
   return { error: 'generation_failed', details: String(lastErr), rawPrompt: prompt };
 }
 
-const firestore = new Firestore();
+const firestore = getFirestore();
 
 // Schemas
 export const TrendInputSchema = z.object({
