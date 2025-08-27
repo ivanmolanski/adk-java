@@ -24,6 +24,7 @@
     "clsx": "latest",
     "date-fns": "latest",
     "firebase": "latest",
+    "firebase-admin": "^13.4.0",
     "lucide-react": "latest",
     "next": "latest",
     "next-themes": "latest",
