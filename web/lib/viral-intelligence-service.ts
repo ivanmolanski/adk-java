@@ -15,6 +15,7 @@ class ViralIntelligenceService {
 
   constructor() {
     this.baseURL = VIRAL_SERVICE_BASE_URL;
+    console.log('ViralIntelligenceService initialized with baseURL:', this.baseURL);
   }
 
   /**
@@ -134,10 +135,20 @@ class ViralIntelligenceService {
    */
   async healthCheck(): Promise<boolean> {
     try {
+      console.log('Performing health check to:', `${this.baseURL}/api/viral/health`);
       const response = await axios.get(`${this.baseURL}/api/viral/health`);
+      console.log('Health check response:', response.data);
       return response.data.status === 'UP';
     } catch (error) {
       console.error('Error checking service health:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error details:', {
+          message: error.message,
+          code: error.code,
+          response: error.response?.status,
+          responseData: error.response?.data
+        });
+      }
       return false;
     }
   }

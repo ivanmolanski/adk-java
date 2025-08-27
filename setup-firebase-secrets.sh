@@ -1,19 +1,36 @@
 #!/bin/bash
 
-# Firebase Secrets Setup Script for Viral Forge System
-# Run this script after logging into gcloud to set up all required secrets for production deployment
+# Firebase Functions Secret Setup Script for MD Aesthetics Viral Forge
+# Run this script to set all required secrets for the Firebase Functions
 
 set -e
 
 PROJECT_ID="contentforge-ai-ygy25"
-echo "Setting up Firebase Secrets for project: $PROJECT_ID"
+echo "Setting up Firebase Functions secrets for project: $PROJECT_ID"
 
-# Ensure we're using the correct project
-gcloud config set project $PROJECT_ID
+# Check if firebase CLI is installed
+if ! command -v firebase &> /dev/null; then
+    echo "Firebase CLI is not installed. Please install it first:"
+    echo "npm install -g firebase-tools"
+    exit 1
+fi
 
-# Read secrets from .env file if it exists
-if [ -f ".env" ]; then
-    echo "Reading configuration from .env file..."
+# Check if user is logged in
+if ! firebase projects:list &> /dev/null; then
+    echo "Please login to Firebase first:"
+    echo "firebase login"
+    exit 1
+fi
+
+echo "Setting Firebase project to: $PROJECT_ID"
+firebase use $PROJECT_ID
+
+# Read secrets from main .env file
+if [ -f "../.env" ]; then
+    echo "Reading configuration from main .env file..."
+    source ../.env
+elif [ -f ".env" ]; then
+    echo "Reading configuration from local .env file..."
     source .env
 else
     echo "No .env file found. Please create one with required values."
@@ -21,97 +38,93 @@ else
 fi
 
 # Function to create or update a secret
-create_or_update_secret() {
+set_secret() {
     local SECRET_NAME=$1
     local SECRET_VALUE=$2
-    
-    if gcloud secrets describe $SECRET_NAME --project=$PROJECT_ID >/dev/null 2>&1; then
-        echo "Updating existing secret: $SECRET_NAME"
-        echo -n "$SECRET_VALUE" | gcloud secrets versions add $SECRET_NAME --data-file=-
-    else
-        echo "Creating new secret: $SECRET_NAME"
-        echo -n "$SECRET_VALUE" | gcloud secrets create $SECRET_NAME --data-file=-
+
+    if [ -z "$SECRET_VALUE" ] || [ "$SECRET_VALUE" = "REPLACE_WITH_REAL_"* ] || [ "$SECRET_VALUE" = "your-"* ]; then
+        echo "Skipping $SECRET_NAME (not set or placeholder value: $SECRET_VALUE)"
+        return
     fi
+
+    echo "Setting secret: $SECRET_NAME"
+    firebase functions:secrets:set $SECRET_NAME --data "$SECRET_VALUE"
 }
 
 # Set up all required secrets
 echo "Setting up secrets..."
 
-# Firebase configuration secrets
+# APIFY Token for scraping
+if [ -n "$APIFY_TOKEN" ]; then
+    set_secret "APIFY_TOKEN" "$APIFY_TOKEN"
+fi
+
+# Gemini API Key
+if [ -n "$GEMINI_API_KEY" ]; then
+    set_secret "GEMINI_API_KEY" "$GEMINI_API_KEY"
+fi
+
+# Google Custom Search API Key
+if [ -n "$GOOGLE_CSE_KEY" ]; then
+    set_secret "GOOGLE_CSE_KEY" "$GOOGLE_CSE_KEY"
+fi
+
+# Google Custom Search Engine ID
+if [ -n "$GOOGLE_CSE_CX" ]; then
+    set_secret "GOOGLE_CSE_CX" "$GOOGLE_CSE_CX"
+fi
+
+# Firebase Configuration
+if [ -n "$FIREBASE_PROJECT_ID" ]; then
+    set_secret "FIREBASE_PROJECT_ID" "$FIREBASE_PROJECT_ID"
+fi
+
 if [ -n "$FIREBASE_API_KEY" ]; then
-    create_or_update_secret "FIREBASE_API_KEY" "$FIREBASE_API_KEY"
+    set_secret "FIREBASE_API_KEY" "$FIREBASE_API_KEY"
 fi
 
 if [ -n "$FIREBASE_AUTH_DOMAIN" ]; then
-    create_or_update_secret "FIREBASE_AUTH_DOMAIN" "$FIREBASE_AUTH_DOMAIN"
-fi
-
-if [ -n "$FIREBASE_PROJECT_ID" ]; then
-    create_or_update_secret "FIREBASE_PROJECT_ID" "$FIREBASE_PROJECT_ID"
+    set_secret "FIREBASE_AUTH_DOMAIN" "$FIREBASE_AUTH_DOMAIN"
 fi
 
 if [ -n "$FIREBASE_STORAGE_BUCKET" ]; then
-    create_or_update_secret "FIREBASE_STORAGE_BUCKET" "$FIREBASE_STORAGE_BUCKET"
-fi
-
-if [ -n "$FIREBASE_MESSAGING_SENDER_ID" ]; then
-    create_or_update_secret "FIREBASE_MESSAGING_SENDER_ID" "$FIREBASE_MESSAGING_SENDER_ID"
+    set_secret "FIREBASE_STORAGE_BUCKET" "$FIREBASE_STORAGE_BUCKET"
 fi
 
 if [ -n "$FIREBASE_APP_ID" ]; then
-    create_or_update_secret "FIREBASE_APP_ID" "$FIREBASE_APP_ID"
+    set_secret "FIREBASE_APP_ID" "$FIREBASE_APP_ID"
 fi
 
-# GenAI API Key (already exists but ensure it's up to date)
-if [ -n "$GEMINI_API_KEY" ]; then
-    create_or_update_secret "GEMINI_API_KEY" "$GEMINI_API_KEY"
+if [ -n "$FIREBASE_MESSAGING_SENDER_ID" ]; then
+    set_secret "FIREBASE_MESSAGING_SENDER_ID" "$FIREBASE_MESSAGING_SENDER_ID"
 fi
 
-# Service Account JSON (if service-account.json file exists)
-if [ -f "service-account.json" ]; then
-    echo "Setting up SERVICE_ACCOUNT_JSON secret from service-account.json file"
-    create_or_update_secret "SERVICE_ACCOUNT_JSON" "$(cat service-account.json)"
+if [ -n "$FIREBASE_MEASUREMENT_ID" ]; then
+    set_secret "FIREBASE_MEASUREMENT_ID" "$FIREBASE_MEASUREMENT_ID"
 fi
 
-# Google Custom Search (optional - for enhanced scraping)
-if [ -n "$GOOGLE_CSE_KEY" ]; then
-    create_or_update_secret "GOOGLE_CSE_KEY" "$GOOGLE_CSE_KEY"
+# Service Account JSON (if service-account.json file exists in project root)
+if [ -f "../service-account.json" ]; then
+    echo "Setting SERVICE_ACCOUNT_JSON from ../service-account.json file"
+    firebase functions:secrets:set SERVICE_ACCOUNT_JSON --data-file ../service-account.json
+elif [ -f "service-account.json" ]; then
+    echo "Setting SERVICE_ACCOUNT_JSON from service-account.json file"
+    firebase functions:secrets:set SERVICE_ACCOUNT_JSON --data-file service-account.json
+else
+    echo "Warning: service-account.json not found. Please create it and run:"
+    echo "firebase functions:secrets:set SERVICE_ACCOUNT_JSON --data-file service-account.json"
 fi
 
-if [ -n "$GOOGLE_CSE_CX" ]; then
-    create_or_update_secret "GOOGLE_CSE_CX" "$GOOGLE_CSE_CX"
+# Gmail Service Account (if provided)
+if [ -n "$GMAIL_SERVICE_ACCOUNT" ]; then
+    set_secret "GMAIL_SERVICE_ACCOUNT" "$GMAIL_SERVICE_ACCOUNT"
 fi
 
-# Social Media API credentials (optional)
-if [ -n "$TIKTOK_CLIENT_ID" ]; then
-    create_or_update_secret "TIKTOK_CLIENT_ID" "$TIKTOK_CLIENT_ID"
-fi
-
-if [ -n "$TIKTOK_CLIENT_SECRET" ]; then
-    create_or_update_secret "TIKTOK_CLIENT_SECRET" "$TIKTOK_CLIENT_SECRET"
-fi
-
-if [ -n "$INSTAGRAM_CLIENT_ID" ]; then
-    create_or_update_secret "INSTAGRAM_CLIENT_ID" "$INSTAGRAM_CLIENT_ID"
-fi
-
-if [ -n "$INSTAGRAM_CLIENT_SECRET" ]; then
-    create_or_update_secret "INSTAGRAM_CLIENT_SECRET" "$INSTAGRAM_CLIENT_SECRET"
-fi
-
-# Gmail API credentials for email dispatch
-if [ -n "$GMAIL_SERVICE_ACCOUNT_KEY" ]; then
-    create_or_update_secret "GMAIL_SERVICE_ACCOUNT_KEY" "$GMAIL_SERVICE_ACCOUNT_KEY"
-fi
-
-echo "✅ Firebase secrets setup complete!"
+echo "✅ Firebase Functions secrets setup complete!"
 echo ""
-echo "Secrets created/updated:"
-gcloud secrets list --filter="name:projects/$PROJECT_ID/secrets/" --format="table(name.basename():label='SECRET_NAME',createTime:label='CREATED')"
-
+echo "To verify secrets were set correctly:"
+echo "firebase functions:secrets:access APIFY_TOKEN"
 echo ""
 echo "Next steps:"
 echo "1. Deploy Functions: cd functions && firebase deploy --only functions"
-echo "2. Deploy Java service to Cloud Run or App Engine"
-echo "3. Configure Pub/Sub topics and subscriptions"
-echo "4. Set up Cloud Scheduler for daily runs"
+echo "2. Test the integration: curl https://us-central1-$PROJECT_ID.cloudfunctions.net/runOrchestrationHttp"

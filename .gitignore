@@ -2,18 +2,18 @@ target/
 .idea
 node_modules
 
-# Security - Never commit sensitive files
-service-account.json
-*.pem
-*.key
-.env.local
-.env.production.local
-.env.development.local
+# Security - Never commit sensitive files (but keep locally for development)
+# service-account.json - commented out for local development
 
 # Firebase
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Environment files
+.env.local
+.env.production.local
+.env.development.local
 
 # OS generated files
 .DS_Store

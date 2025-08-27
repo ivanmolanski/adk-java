@@ -39,7 +39,7 @@ public class FirestoreAccessService {
             data.put("evs", post.evs());
             data.put("postedAt", post.postedAt()==null?null:post.postedAt().toEpochMilli());
             data.put("scrapedAt", post.scrapedAt()==null?null:post.scrapedAt().toEpochMilli());
-            DocumentReference ref = db().collection("competitorPosts").document();
+            DocumentReference ref = db().collection(FirestoreCollections.COMPETITOR_POSTS).document();
             ref.set(data);
             return post.withId(ref.getId());
         } catch (Exception e) {
@@ -50,7 +50,7 @@ public class FirestoreAccessService {
 
     public Optional<CompetitorPost> getCompetitorPost(String id) {
         try {
-            DocumentSnapshot snap = db().collection("competitorPosts").document(id).get().get();
+            DocumentSnapshot snap = db().collection(FirestoreCollections.COMPETITOR_POSTS).document(id).get().get();
             if (!snap.exists()) return Optional.empty();
             return Optional.of(mapCompetitorPost(snap));
         } catch (InterruptedException | ExecutionException e) {
@@ -61,7 +61,7 @@ public class FirestoreAccessService {
 
     public List<CompetitorPost> listRecentCompetitorPosts(int limit) {
         try {
-            ApiFuture<QuerySnapshot> fut = db().collection("competitorPosts")
+            ApiFuture<QuerySnapshot> fut = db().collection(FirestoreCollections.COMPETITOR_POSTS)
                 .orderBy("scrapedAt", Query.Direction.DESCENDING)
                 .limit(limit)
                 .get();
@@ -105,7 +105,7 @@ public class FirestoreAccessService {
             data.put("relevanceScore", ta.relevanceScore());
             data.put("rawAgentJson", ta.rawAgentJson());
             data.put("analyzedAt", ta.analyzedAt()==null?null:ta.analyzedAt().toEpochMilli());
-            DocumentReference ref = db().collection("trendAnalyses").document();
+            DocumentReference ref = db().collection(FirestoreCollections.TREND_ANALYSES).document();
             ref.set(data);
             return ta.withId(ref.getId());
         } catch (Exception e) {
@@ -116,7 +116,7 @@ public class FirestoreAccessService {
 
     public List<TrendAnalysis> listRecentTrendAnalyses(int limit) {
         try {
-            ApiFuture<QuerySnapshot> fut = db().collection("trendAnalyses")
+            ApiFuture<QuerySnapshot> fut = db().collection(FirestoreCollections.TREND_ANALYSES)
                 .orderBy("analyzedAt", Query.Direction.DESCENDING)
                 .limit(limit)
                 .get();
@@ -124,6 +124,76 @@ public class FirestoreAccessService {
         } catch (Exception e) {
             log.error("listRecentTrendAnalyses error {}", e.getMessage(), e);
             return List.of();
+        }
+    }
+
+    /**
+     * List trend analyses with cursor-based pagination.
+     * @param limit Maximum number of items to return (1-50)
+     * @param cursor ISO timestamp string for pagination (optional)
+     * @return List of trend analyses
+     */
+    public PaginatedResult<TrendAnalysis> listTrendAnalysesWithCursor(int limit, String cursor) {
+        try {
+            Query query = db().collection(FirestoreCollections.TREND_ANALYSES)
+                .orderBy("analyzedAt", Query.Direction.DESCENDING);
+
+            if (cursor != null && !cursor.isEmpty()) {
+                try {
+                    Instant cursorInstant = Instant.parse(cursor);
+                    query = query.startAfter(cursorInstant.toEpochMilli());
+                } catch (Exception e) {
+                    log.warn("Invalid cursor format: {}, ignoring", cursor);
+                }
+            }
+
+            ApiFuture<QuerySnapshot> fut = query.limit(Math.min(limit + 1, 51)).get();
+            List<QueryDocumentSnapshot> docs = fut.get().getDocuments();
+
+            boolean hasMore = docs.size() > limit;
+            List<TrendAnalysis> items = docs.stream()
+                .limit(limit)
+                .map(this::mapTrendAnalysis)
+                .collect(Collectors.toList());
+
+            String nextCursor = null;
+            if (hasMore && !items.isEmpty()) {
+                TrendAnalysis last = items.get(items.size() - 1);
+                nextCursor = last.analyzedAt() != null ? last.analyzedAt().toString() : null;
+            }
+
+            return new PaginatedResult<>(items, nextCursor, hasMore);
+        } catch (Exception e) {
+            log.error("listTrendAnalysesWithCursor error {}", e.getMessage(), e);
+            return new PaginatedResult<>(List.of(), null, false);
+        }
+    }
+
+    /** Direct get by TrendAnalysis document id. */
+    public Optional<TrendAnalysis> getTrendAnalysis(String id) {
+        try {
+            DocumentSnapshot snap = db().collection(FirestoreCollections.TREND_ANALYSES).document(id).get().get();
+            if(!snap.exists()) return Optional.empty();
+            return Optional.of(mapTrendAnalysis(snap));
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Fetch trendAnalysis failed id={} msg={}", id, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /** Direct indexed lookup of a TrendAnalysis by competitorPostId (most recent if multiple). */
+    public Optional<TrendAnalysis> findLatestTrendAnalysisForCompetitorPost(String competitorPostId) {
+        try {
+            Query q = db().collection(FirestoreCollections.TREND_ANALYSES)
+                .whereEqualTo("competitorPostId", competitorPostId)
+                .orderBy("analyzedAt", Query.Direction.DESCENDING)
+                .limit(1);
+            List<QueryDocumentSnapshot> docs = q.get().get().getDocuments();
+            if (docs.isEmpty()) return Optional.empty();
+            return Optional.of(mapTrendAnalysis(docs.get(0)));
+        } catch (Exception e) {
+            log.error("findLatestTrendAnalysisForCompetitorPost error postId={} msg={}", competitorPostId, e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -135,7 +205,7 @@ public class FirestoreAccessService {
             snap.getString("hook"),
             snap.getString("callToAction"),
             snap.getString("educationalPoint"),
-            (List<String>) snap.get("extractedHashtags"),
+            castStringList(snap.get("extractedHashtags")),
             getDouble(snap, "viralityScore"),
             getDouble(snap, "relevanceScore"),
             snap.getString("rawAgentJson"),
@@ -157,7 +227,7 @@ public class FirestoreAccessService {
             data.put("compliancePassed", draft.compliancePassed());
             data.put("complianceNotes", draft.complianceNotes());
             data.put("createdAt", draft.createdAt()==null?null:draft.createdAt().toEpochMilli());
-            DocumentReference ref = db().collection("contentDrafts").document();
+            DocumentReference ref = db().collection(FirestoreCollections.CONTENT_DRAFTS).document();
             ref.set(data);
             return draft.withId(ref.getId());
         } catch (Exception e) {
@@ -168,7 +238,7 @@ public class FirestoreAccessService {
 
     public List<ContentDraft> listRecentContentDrafts(int limit) {
         try {
-            ApiFuture<QuerySnapshot> fut = db().collection("contentDrafts")
+            ApiFuture<QuerySnapshot> fut = db().collection(FirestoreCollections.CONTENT_DRAFTS)
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .limit(limit)
                 .get();
@@ -176,6 +246,76 @@ public class FirestoreAccessService {
         } catch (Exception e) {
             log.error("listRecentContentDrafts error {}", e.getMessage(), e);
             return List.of();
+        }
+    }
+
+    /**
+     * List content drafts with cursor-based pagination.
+     * @param limit Maximum number of items to return (1-50)
+     * @param cursor ISO timestamp string for pagination (optional)
+     * @return Paginated result of content drafts
+     */
+    public PaginatedResult<ContentDraft> listContentDraftsWithCursor(int limit, String cursor) {
+        try {
+            Query query = db().collection(FirestoreCollections.CONTENT_DRAFTS)
+                .orderBy("createdAt", Query.Direction.DESCENDING);
+
+            if (cursor != null && !cursor.isEmpty()) {
+                try {
+                    Instant cursorInstant = Instant.parse(cursor);
+                    query = query.startAfter(cursorInstant.toEpochMilli());
+                } catch (Exception e) {
+                    log.warn("Invalid cursor format: {}, ignoring", cursor);
+                }
+            }
+
+            ApiFuture<QuerySnapshot> fut = query.limit(Math.min(limit + 1, 51)).get();
+            List<QueryDocumentSnapshot> docs = fut.get().getDocuments();
+
+            boolean hasMore = docs.size() > limit;
+            List<ContentDraft> items = docs.stream()
+                .limit(limit)
+                .map(this::mapContentDraft)
+                .collect(Collectors.toList());
+
+            String nextCursor = null;
+            if (hasMore && !items.isEmpty()) {
+                ContentDraft last = items.get(items.size() - 1);
+                nextCursor = last.createdAt() != null ? last.createdAt().toString() : null;
+            }
+
+            return new PaginatedResult<>(items, nextCursor, hasMore);
+        } catch (Exception e) {
+            log.error("listContentDraftsWithCursor error {}", e.getMessage(), e);
+            return new PaginatedResult<>(List.of(), null, false);
+        }
+    }
+
+    /** Direct get by ContentDraft document id. */
+    public Optional<ContentDraft> getContentDraft(String id) {
+        try {
+            DocumentSnapshot snap = db().collection(FirestoreCollections.CONTENT_DRAFTS).document(id).get().get();
+            if(!snap.exists()) return Optional.empty();
+            return Optional.of(mapContentDraft(snap));
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Fetch contentDraft failed id={} msg={}", id, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /** Direct indexed lookup of latest ContentDraft by trendAnalysisId. */
+    public Optional<ContentDraft> findLatestContentDraftForTrendAnalysis(String trendAnalysisId) {
+        try {
+            Query q = db().collection(FirestoreCollections.CONTENT_DRAFTS)
+                .whereEqualTo("trendAnalysisId", trendAnalysisId)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(1);
+            List<QueryDocumentSnapshot> docs = q.get().get().getDocuments();
+            if (docs.isEmpty()) return Optional.empty();
+            return Optional.of(mapContentDraft(docs.get(0)));
+        } catch (Exception e) {
+            log.error("findLatestContentDraftForTrendAnalysis error analysisId={} msg={}", trendAnalysisId, e.getMessage());
+            return Optional.empty();
         }
     }
 
@@ -205,7 +345,7 @@ public class FirestoreAccessService {
             data.put("htmlBody", brief.htmlBody());
             data.put("sent", brief.sent());
             data.put("sentAt", brief.sentAt()==null?null:brief.sentAt().toEpochMilli());
-            DocumentReference ref = db().collection("dailyBriefs").document();
+            DocumentReference ref = db().collection(FirestoreCollections.DAILY_BRIEFS).document();
             ref.set(data);
             return brief.withId(ref.getId());
         } catch (Exception e) {
@@ -216,7 +356,7 @@ public class FirestoreAccessService {
 
     public List<DailyBrief> listRecentDailyBriefs(int limit) {
         try {
-            ApiFuture<QuerySnapshot> fut = db().collection("dailyBriefs")
+            ApiFuture<QuerySnapshot> fut = db().collection(FirestoreCollections.DAILY_BRIEFS)
                 .orderBy("date", Query.Direction.DESCENDING)
                 .limit(limit)
                 .get();

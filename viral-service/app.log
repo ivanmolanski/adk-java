@@ -55,3 +55,16 @@ Standard Commons Logging discovery in action with spring-jcl: please remove comm
 2025-08-25T21:48:14.417Z DEBUG 135370 --- [viral-service] [           main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 0 @ExceptionHandler, 1 ResponseBodyAdvice
 2025-08-25T21:48:14.603Z  INFO 135370 --- [viral-service] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/viral-service'
 2025-08-25T21:48:14.616Z  INFO 135370 --- [viral-service] [           main] c.m.viral.ViralServiceApplication        : Started ViralServiceApplication in 2.423 seconds (process running for 2.727)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  02:18 h
+[INFO] Finished at: 2025-08-26T00:06:51Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.4.1:run (default-cli) on project viral-service: Process terminated with exit code: 137 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

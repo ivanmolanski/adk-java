@@ -6,9 +6,24 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { TrendingUp, Users, MessageSquare, BarChart3, RefreshCw, Calendar, Zap, Target, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SocialMediaPost } from '@/components/SocialMediaPost';
+import { useState, useEffect } from 'react';
 
 export default function DashboardPage() {
   const { trends, drafts, dailyBrief, isLoading, error, refreshData } = useViralIntelligence();
+  const [currentTime, setCurrentTime] = useState<string>('');
+
+  // Update time on client side to avoid hydration mismatch
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    };
+    
+    updateTime(); // Set initial time
+    const interval = setInterval(updateTime, 1000); // Update every second
+    
+    return () => clearInterval(interval);
+  }, []);
 
   if (isLoading) {
     return (
@@ -63,7 +78,7 @@ export default function DashboardPage() {
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             <Clock className="w-4 h-4 mr-2" />
-            Last updated: {new Date().toLocaleTimeString()}
+            Last updated: {currentTime || 'Loading...'}
           </Button>
           <Button onClick={refreshData} disabled={isLoading}>
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -291,39 +306,64 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* System Health */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <CheckCircle2 className="w-5 h-5 text-green-500" />
-            <span>System Status</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl mb-1">🤖</div>
-              <div className="text-sm font-medium">Content Creator</div>
-              <div className="text-xs text-green-600">Active</div>
+      {/* Social Media Posting */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <MessageSquare className="w-5 h-5" />
+              <span>Ready to Post</span>
+            </CardTitle>
+            <CardDescription>AI-generated content ready for social media</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {drafts?.slice(0, 2).map((draft) => (
+                <SocialMediaPost
+                  key={draft.id}
+                  draft={draft}
+                  onPostSuccess={refreshData}
+                />
+              ))}
+              {drafts?.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No drafts available. Generate some content first.
+                </p>
+              )}
             </div>
-            <div className="text-center">
-              <div className="text-2xl mb-1">📊</div>
-              <div className="text-sm font-medium">Trend Analyzer</div>
-              <div className="text-xs text-green-600">Active</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Target className="w-5 h-5" />
+              <span>Posting Actions</span>
+            </CardTitle>
+            <CardDescription>Quick actions for content creation and posting</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="h-20 flex-col space-y-2">
+                <TrendingUp className="w-6 h-6" />
+                <span className="text-sm">Analyze Trends</span>
+              </Button>
+              <Button variant="outline" className="h-20 flex-col space-y-2">
+                <MessageSquare className="w-6 h-6" />
+                <span className="text-sm">Create Content</span>
+              </Button>
+              <Button variant="outline" className="h-20 flex-col space-y-2">
+                <BarChart3 className="w-6 h-6" />
+                <span className="text-sm">View Analytics</span>
+              </Button>
+              <Button variant="outline" className="h-20 flex-col space-y-2">
+                <Calendar className="w-6 h-6" />
+                <span className="text-sm">Schedule Posts</span>
+              </Button>
             </div>
-            <div className="text-center">
-              <div className="text-2xl mb-1">🕷️</div>
-              <div className="text-sm font-medium">Web Scraper</div>
-              <div className="text-xs text-green-600">Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl mb-1">✉️</div>
-              <div className="text-sm font-medium">Email Reports</div>
-              <div className="text-xs text-green-600">Active</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

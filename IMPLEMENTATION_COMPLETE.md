@@ -91,11 +91,12 @@
 
 ### 🔑 Environment Configuration
 
-Required environment variables (already configured in `.env`):
+Required environment variables (configured in `.env`):
 ```bash
-GOOGLE_API_KEY=AIzaSyBVjCUUbsMTUVRx-_Reo9YYsQ3zONbzBxg
-FIREBASE_API_KEY=AIzaSyAPDjj37OF9fdO2nsq2Qezwea-xGfPJRlA
-FIREBASE_PROJECT_ID=contentforge-ai-ygy25
+# API keys are securely configured in .env file
+# GOOGLE_API_KEY=[CONFIGURED]
+# FIREBASE_API_KEY=[CONFIGURED]
+# FIREBASE_PROJECT_ID=[CONFIGURED]
 ```
 
 ### 🎯 Service Status

@@ -1,5 +1,18 @@
 package com.mdaesthetics.viral.controller;
 
+import com.mdaesthetics.viral.model.PaginatedResult;
+import com.mdaesthetics.viral.model.TrendAnalysis;
+import com.mdaesthetics.viral.model.ContentDraft;
+import com.mdaesthetics.viral.model.CompetitorPost;
+import com.mdaesthetics.viral.dto.TrendAnalysisDto;
+import com.mdaesthetics.viral.dto.ContentDraftDto;
+import com.mdaesthetics.viral.dto.DtoMapper;
+import com.mdaesthetics.viral.dto.TrendDetailDto;
+import com.mdaesthetics.viral.dto.DraftDetailDto;
+import com.mdaesthetics.viral.service.ViralAggregationService;
+import com.mdaesthetics.viral.service.ViralWorkflowService;
+import com.mdaesthetics.viral.service.FirestoreAccessService;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -15,61 +28,115 @@ public class ViralAnalysisController {
 
     private static final Logger logger = LoggerFactory.getLogger(ViralAnalysisController.class);
     
+    private final ViralWorkflowService viralWorkflowService;
+    private final FirestoreAccessService firestoreAccessService;
+    private final ViralAggregationService aggregationService;
+
+    private final io.micrometer.core.instrument.Counter trendsListCounter;
+    private final io.micrometer.core.instrument.Counter draftsListCounter;
+    private final io.micrometer.core.instrument.Counter trendsDetailCounter;
+    private final io.micrometer.core.instrument.Counter draftsDetailCounter;
+
+    public ViralAnalysisController(
+            MeterRegistry meterRegistry,
+            ViralWorkflowService viralWorkflowService,
+            FirestoreAccessService firestoreAccessService,
+            ViralAggregationService aggregationService) {
+        this.viralWorkflowService = viralWorkflowService;
+        this.firestoreAccessService = firestoreAccessService;
+        this.aggregationService = aggregationService;
+        this.trendsListCounter = meterRegistry.counter("api.trends.list.count");
+        this.draftsListCounter = meterRegistry.counter("api.drafts.list.count");
+        this.trendsDetailCounter = meterRegistry.counter("api.trends.detail.count");
+        this.draftsDetailCounter = meterRegistry.counter("api.drafts.detail.count");
+    }
+    
     @GetMapping("/trends")
-    public ResponseEntity<Map<String, Object>> getTrends(@RequestParam(value = "limit", defaultValue = "10") int limit) {
-        logger.info("Fetching trends with limit: {}", limit);
-        
-        // Sample trend data for testing
-        List<Map<String, Object>> sampleTrends = Arrays.asList(
-            createTrendSample("trend_1", "Science Explained", "How BBL light penetrates 7 layers of skin", 
-                "Book your consultation", "BBL uses IPL technology to target pigment and blood vessels in the dermis",
-                Arrays.asList("#bblforever", "#sciencebasedskincare", "#torontoaesthetics"), 0.8, 0.9),
-            
-            createTrendSample("trend_2", "Process Demystified", "SkinTyte treatment: what to expect during your session",
-                "Call us to book", "Infrared energy heats collagen fibers causing immediate tightening",
-                Arrays.asList("#skintyte", "#skinlaxity", "#mdaesthetics"), 0.7, 0.85),
-                
-            createTrendSample("trend_3", "Transformation", "6 months post Duo-C-Lift: neck and jawline results",
-                "See if you're a candidate", "Ultherapy builds collagen while Radiesse provides structure",
-                Arrays.asList("#duoclift", "#nonsurgicallift", "#radiesse"), 0.9, 0.8),
-                
-            createTrendSample("trend_4", "Myth Busting", "Why at-home RF devices can't compete with professional SkinTyte",
-                "Book professional assessment", "Clinical-grade energy levels require medical supervision",
-                Arrays.asList("#mythbusting", "#professionalskincare", "#whitbymedspa"), 0.6, 0.9)
-        );
-        
+    public ResponseEntity<Map<String, Object>> getTrends(
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(value = "cursor", required = false) String cursor) {
+        logger.info("Fetching trends with limit: {}, cursor: {}", limit, cursor);
+        trendsListCounter.increment();
+
+        // Validate limit
+        if (limit < 1 || limit > 50) {
+            limit = 10;
+        }
+
+        PaginatedResult<TrendAnalysis> result = firestoreAccessService.listTrendAnalysesWithCursor(limit, cursor);
+        List<TrendAnalysisDto> trendDtos;
+
+        if (result.items().isEmpty()) {
+            trendDtos = List.of(new TrendAnalysisDto(
+                    "trend_sample_1",
+                    "sample_post_1",
+                    "Science Explained",
+                    "How BBL light penetrates 7 layers of skin",
+                    "Book your consultation",
+                    "BBL uses IPL technology to target pigment and blood vessels in the dermis",
+                    List.of("#bblforever", "#sciencebasedskincare", "#torontoaesthetics"),
+                    0.8,
+                    0.9,
+                    Instant.now()
+            ));
+        } else {
+            trendDtos = result.items().stream().map(analysis -> DtoMapper.toDto(analysis)).toList();
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("status", "success");
-        response.put("trends", sampleTrends.subList(0, Math.min(limit, sampleTrends.size())));
+        response.put("trends", trendDtos);
+        response.put("count", trendDtos.size());
+        response.put("pagination", Map.of(
+            "hasMore", result.hasMore(),
+            "nextCursor", result.nextCursor() != null ? result.nextCursor() : ""
+        ));
         response.put("timestamp", Instant.now().toString());
-        
         return ResponseEntity.ok(response);
     }
     
     @GetMapping("/drafts")
-    public ResponseEntity<Map<String, Object>> getDrafts(@RequestParam(value = "limit", defaultValue = "5") int limit) {
-        logger.info("Fetching drafts with limit: {}", limit);
-        
-        // Sample draft data for testing
-        List<Map<String, Object>> sampleDrafts = Arrays.asList(
-            createDraftSample("draft_1", "instagram", 
-                "Transform your skin with our signature Duo-C-Lift! 🌟 Combining Ultherapy's precision with Radiesse's collagen boost = natural-looking lift without surgery. Book your consultation to see if you're a candidate! ✨",
-                Arrays.asList("#duoclift", "#ultherapy", "#radiesse", "#torontoaesthetics", "#mdaesthetics"), "video", true),
-                
-            createDraftSample("draft_2", "instagram",
-                "SkinTyte treatment demystified! 💡 Our infrared technology heats collagen to 40-45°C, causing immediate tightening + long-term firming. Perfect for loose skin on face, neck, or body. DM us for your consultation! 🔥",
-                Arrays.asList("#skintyte", "#skinlaxity", "#collagenstimulation", "#whitbymedspa", "#firmskin"), "carousel", true),
-                
-            createDraftSample("draft_3", "tiktok",
-                "POV: You discover the science behind BBL treatments 🔬 IPL energy targets melanin + hemoglobin in 7 skin layers = clearer, more even tone. Book your BBL consultation! Link in bio ⚡",
-                Arrays.asList("#bblforever", "#sciencebasedskincare", "#ipllaser", "#skintone", "#mdaesthetics"), "video", true)
-        );
-        
-        Map<String, Object> response = new HashMap<>();
+    public ResponseEntity<Map<String, Object>> getDrafts(
+            @RequestParam(value = "limit", defaultValue = "5") int limit,
+            @RequestParam(value = "cursor", required = false) String cursor) {
+        logger.info("Fetching drafts with limit: {}, cursor: {}", limit, cursor);
+        draftsListCounter.increment();
+
+        // Validate limit
+        if (limit < 1 || limit > 50) {
+            limit = 5;
+        }
+
+        PaginatedResult<ContentDraft> result = firestoreAccessService.listContentDraftsWithCursor(limit, cursor);
+        List<ContentDraftDto> dtoList;
+
+        if (result.items().isEmpty()) {
+            dtoList = List.of(new ContentDraftDto(
+                    "draft_sample_1",
+                    "trend_sample_1",
+                    "SkinTyte",
+                    "Loose skin? Infrared tightening is back.",
+                    "We pair SkinTyte with clinical-grade collagen support to firm and smooth without downtime.",
+                    List.of("#skintyte", "#firmandsmooth", "#torontoaesthetics", "#mdaesthetics"),
+                    "DM to see if you're a candidate for our Tyte & Tone bundle.",
+                    true,
+                    true,
+                    "Auto-generated sample",
+                    Instant.now()
+            ));
+        } else {
+            dtoList = result.items().stream().map(draft -> DtoMapper.toDto(draft)).toList();
+        }
+
+        Map<String,Object> response = new HashMap<>();
         response.put("status", "success");
-        response.put("drafts", sampleDrafts.subList(0, Math.min(limit, sampleDrafts.size())));
+        response.put("drafts", dtoList);
+        response.put("count", dtoList.size());
+        response.put("pagination", Map.of(
+            "hasMore", result.hasMore(),
+            "nextCursor", result.nextCursor() != null ? result.nextCursor() : ""
+        ));
         response.put("timestamp", Instant.now().toString());
-        
         return ResponseEntity.ok(response);
     }
     
@@ -97,6 +164,65 @@ public class ViralAnalysisController {
         
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/trends/{id}")
+    public ResponseEntity<Map<String, Object>> getTrendDetail(@PathVariable("id") String id) {
+        logger.info("Fetching trend detail id={}", id);
+        trendsDetailCounter.increment();
+        Map<String,Object> response = new HashMap<>();
+        try {
+            Optional<TrendDetailDto> dtoOpt = aggregationService.buildTrendDetail(id);
+            if (dtoOpt.isEmpty()) {
+                // fallback sample
+                TrendDetailDto sample = aggregationService.sampleTrendDetail();
+                response.put("status", "fallback");
+                response.put("detail", sample);
+                response.put("timestamp", Instant.now().toString());
+                return ResponseEntity.ok(response);
+            }
+            response.put("status", "success");
+            response.put("detail", dtoOpt.get());
+            response.put("timestamp", Instant.now().toString());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Trend detail error id={} msg={}", id, e.getMessage());
+            // Treat backend data access failures as a graceful fallback response
+            response.put("status", "fallback");
+            response.put("detail", aggregationService.sampleTrendDetail());
+            response.put("message", e.getMessage());
+            response.put("timestamp", Instant.now().toString());
+            return ResponseEntity.ok(response);
+        }
+    }
+
+    @GetMapping("/drafts/{id}")
+    public ResponseEntity<Map<String, Object>> getDraftDetail(@PathVariable("id") String id) {
+        logger.info("Fetching draft detail id={}", id);
+        draftsDetailCounter.increment();
+        Map<String,Object> response = new HashMap<>();
+        try {
+            Optional<DraftDetailDto> dtoOpt = aggregationService.buildDraftDetail(id);
+            if (dtoOpt.isEmpty()) {
+                DraftDetailDto sample = aggregationService.sampleDraftDetail();
+                response.put("status", "fallback");
+                response.put("detail", sample);
+                response.put("timestamp", Instant.now().toString());
+                return ResponseEntity.ok(response);
+            }
+            response.put("status", "success");
+            response.put("detail", dtoOpt.get());
+            response.put("timestamp", Instant.now().toString());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Draft detail error id={} msg={}", id, e.getMessage());
+            // Graceful fallback on data access errors
+            response.put("status", "fallback");
+            response.put("detail", aggregationService.sampleDraftDetail());
+            response.put("message", e.getMessage());
+            response.put("timestamp", Instant.now().toString());
+            return ResponseEntity.ok(response);
+        }
+    }
     
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
@@ -108,31 +234,49 @@ public class ViralAnalysisController {
         return ResponseEntity.ok(health);
     }
     
-    private Map<String, Object> createTrendSample(String id, String category, String hook, 
-            String cta, String educationalPoint, List<String> hashtags, double viralityScore, double relevanceScore) {
-        Map<String, Object> trend = new HashMap<>();
-        trend.put("id", id);
-        trend.put("category", category);
-        trend.put("hook", hook);
-        trend.put("callToAction", cta);
-        trend.put("educationalPoint", educationalPoint);
-        trend.put("extractedHashtags", hashtags);
-        trend.put("viralityScore", viralityScore);
-        trend.put("relevanceScore", relevanceScore);
-        trend.put("analyzedAt", Instant.now().toString());
-        return trend;
+    @PostMapping("/pipeline/test")
+    public ResponseEntity<Map<String, Object>> testPipeline(@RequestBody Map<String, Object> request) {
+        logger.info("Testing complete ADK agent pipeline");
+        
+        try {
+            // Create a sample competitor post from the request
+            CompetitorPost samplePost = new CompetitorPost(
+                null, // id will be generated
+                (String) request.getOrDefault("platform", "instagram"),
+                (String) request.getOrDefault("profile", "@skinvitalityofficial"),
+                (String) request.getOrDefault("postUrl", "https://www.instagram.com/p/sample123"),
+                (String) request.getOrDefault("caption", "Amazing transformation with our latest SkinTyte treatment! See the incredible results after just one session. Book your consultation today! ✨"),
+                Arrays.asList("#skintyte", "#skinlaxity", "#torontoaesthetics"),
+                Long.valueOf((Integer) request.getOrDefault("likes", 1250)),
+                Long.valueOf((Integer) request.getOrDefault("comments", 89)),
+                Long.valueOf((Integer) request.getOrDefault("shares", 23)),
+                Long.valueOf((Integer) request.getOrDefault("views", 8500)),
+                3.2, // engagementRate
+                0.85, // evs
+                Instant.now().minusSeconds(7200), // postedAt 2 hours ago
+                Instant.now() // scrapedAt now
+            );
+            
+            // Execute the complete pipeline
+            Map<String, Object> pipelineResult = viralWorkflowService.executePipeline(samplePost);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Complete ADK agent pipeline executed successfully");
+            response.put("pipelineResult", pipelineResult);
+            response.put("timestamp", Instant.now().toString());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Pipeline test failed", e);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", "Pipeline test failed: " + e.getMessage());
+            response.put("timestamp", Instant.now().toString());
+            
+            return ResponseEntity.ok(response);
+        }
     }
     
-    private Map<String, Object> createDraftSample(String id, String platform, String caption,
-            List<String> hashtags, String mediaType, boolean complianceChecked) {
-        Map<String, Object> draft = new HashMap<>();
-        draft.put("id", id);
-        draft.put("platform", platform);
-        draft.put("caption", caption);
-        draft.put("hashtags", hashtags);
-        draft.put("suggestedMediaType", mediaType);
-        draft.put("complianceChecked", complianceChecked);
-        draft.put("createdAt", Instant.now().toString());
-        return draft;
-    }
+    // sample factory methods removed in favor of DTO fallbacks
 }

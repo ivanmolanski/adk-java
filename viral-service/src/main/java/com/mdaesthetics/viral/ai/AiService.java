@@ -9,11 +9,13 @@ import com.google.adk.sessions.InMemorySessionService;
 import com.google.genai.types.Content;
 import com.google.genai.types.Part;
 import io.reactivex.rxjava3.core.Flowable;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration; // retained in case of future use
 import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.UUID;
@@ -24,10 +26,13 @@ public class AiService {
 
   private final GenAiProperties props;
   private final LlmAgent agent;
+  private final Timer llmLatencyTimer;
+  private final Counter llmSuccessCounter;
+  private final Counter llmErrorCounter;
   private final InMemorySessionService sessionService = new InMemorySessionService();
   private final InMemoryArtifactService artifactService = new InMemoryArtifactService();
 
-  public AiService(GenAiProperties props) {
+  public AiService(GenAiProperties props, MeterRegistry meterRegistry) {
     this.props = props;
     if (props.apiKey() == null || props.apiKey().isBlank()) {
       log.warn("GENAI_API_KEY / GOOGLE_API_KEY not provided at startup; LLM calls will fallback");
@@ -38,6 +43,9 @@ public class AiService {
         .model("gemini-2.5-flash")
         .instruction("You are a clinically authoritative yet approachable assistant for a physician-led medical aesthetics practice. Keep answers concise, evidence-based, and aligned with professional standards. Avoid definitive medical diagnosis; encourage consultation.")
         .build();
+    this.llmLatencyTimer = meterRegistry.timer("llm.call.latency");
+    this.llmSuccessCounter = meterRegistry.counter("llm.call.success");
+    this.llmErrorCounter = meterRegistry.counter("llm.call.error");
   }
 
   public String chat(List<String> history, String userPrompt) {
@@ -53,7 +61,7 @@ public class AiService {
     }
     conversation.append("User: ").append(userPrompt).append("\nAssistant:");
 
-    try {
+  try {
       InvocationContext ctx = InvocationContext.create(
           sessionService,
           artifactService,
@@ -72,11 +80,15 @@ public class AiService {
       stream.blockingSubscribe(event -> event.content().ifPresent(c -> c.parts().ifPresent(parts -> parts.forEach(p -> p.text().ifPresent(response::append)))));
 
       String out = response.toString().trim();
+      long latency = System.currentTimeMillis() - start;
+      llmLatencyTimer.record(latency, java.util.concurrent.TimeUnit.MILLISECONDS);
       if (out.isBlank()) {
-        log.info("[chat] id={} empty-response latencyMs={}", requestId, System.currentTimeMillis() - start);
+        log.info("[chat] id={} empty-response latencyMs={}", requestId, latency);
+        llmSuccessCounter.increment();
         return "(No response generated)";
       }
-      log.info("[chat] id={} success chars={} latencyMs={}", requestId, out.length(), System.currentTimeMillis() - start);
+      log.info("[chat] id={} success chars={} latencyMs={}", requestId, out.length(), latency);
+      llmSuccessCounter.increment();
       return out;
     } catch (Throwable t) {
       long latency = System.currentTimeMillis() - start;
@@ -89,6 +101,8 @@ public class AiService {
       } else {
         category = "GeneralFailure";
       }
+      llmLatencyTimer.record(latency, java.util.concurrent.TimeUnit.MILLISECONDS);
+      llmErrorCounter.increment();
       return "Error(" + category + "): " + (t.getMessage() == null ? t.getClass().getSimpleName() : t.getMessage());
     }
   }

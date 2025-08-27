@@ -4,8 +4,17 @@ import com.mdaesthetics.viral.model.ContentDraft;
 import com.mdaesthetics.viral.model.TrendAnalysis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.model.Message;
+import java.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -20,6 +29,26 @@ public class EmailDispatcherService {
 
     @Value("${viral.email.recipients:}")
     private String recipients; // comma separated
+
+    @Value("${viral.email.enableSend:false}")
+    private boolean enableSend;
+
+    @Value("${viral.email.serviceAccountKeyPath:}")
+    private String serviceAccountKeyPath; // path to JSON key (requires domain-wide delegation if sending as user)
+
+    @Value("${viral.email.sendAs:}")
+    private String sendAs; // user to send as
+
+    private volatile Gmail gmailClient;
+    private final Counter emailSentCounter;
+    private final Counter emailErrorCounter;
+    private final Timer emailLatencyTimer;
+
+    public EmailDispatcherService(MeterRegistry meterRegistry) {
+        this.emailSentCounter = meterRegistry.counter("email.sent.count");
+        this.emailErrorCounter = meterRegistry.counter("email.send.error");
+        this.emailLatencyTimer = meterRegistry.timer("email.send.latency");
+    }
 
     public String buildHtml(List<TrendAnalysis> analyses, List<ContentDraft> drafts) {
         String trends = analyses.stream().limit(5).map(this::trendRow).collect(Collectors.joining());
@@ -50,16 +79,64 @@ public class EmailDispatcherService {
     }
 
     public void sendDigest(String subject, String html, boolean simulate) {
+        long start = System.currentTimeMillis();
         if (recipients==null || recipients.isBlank()) {
             log.warn("[email] No recipients configured; skipping send");
             return;
         }
-        // TODO: Integrate Gmail API using service account credentials. For now, simulate/log.
-        if (simulate) {
+        if (!enableSend || simulate) {
             log.info("[email] SIMULATION subject='{}' recipients='{}' size={} bytes", subject, recipients, html.length());
-        } else {
-            log.info("[email] (placeholder) Would send to {} subject='{}'", recipients, subject);
+            long latency = System.currentTimeMillis() - start;
+            emailLatencyTimer.record(latency, java.util.concurrent.TimeUnit.MILLISECONDS);
+            return;
         }
+        try {
+            Gmail gmail = getOrCreateClient();
+            for (String rcpt : recipients.split(",")) {
+                String trimmed = rcpt.trim();
+                if (trimmed.isEmpty()) continue;
+                Message msg = buildMimeMessage(trimmed, subject, html);
+                gmail.users().messages().send("me", msg).execute();
+                log.info("[email] Sent digest to {} subject='{}'", trimmed, subject);
+                emailSentCounter.increment();
+            }
+            long latency = System.currentTimeMillis() - start;
+            emailLatencyTimer.record(latency, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("[email] Failed to send digest subject='{}' error={}", subject, e.getMessage(), e);
+            emailErrorCounter.increment();
+            long latency = System.currentTimeMillis() - start;
+            emailLatencyTimer.record(latency, java.util.concurrent.TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private synchronized Gmail getOrCreateClient() throws Exception {
+        if (gmailClient != null) return gmailClient;
+        if (serviceAccountKeyPath==null || serviceAccountKeyPath.isBlank()) {
+            throw new IllegalStateException("serviceAccountKeyPath not configured; cannot create Gmail client");
+        }
+        GoogleCredential credential = GoogleCredential.fromStream(new java.io.FileInputStream(serviceAccountKeyPath))
+            .createScoped(java.util.List.of("https://www.googleapis.com/auth/gmail.send"));
+        // If domain-wide delegation needed, uncomment and configure:
+        if (sendAs!=null && !sendAs.isBlank()) {
+            credential = credential.createDelegated(sendAs);
+        }
+        gmailClient = new Gmail.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+            .setApplicationName("mdaesthetics-viral-service")
+            .build();
+        return gmailClient;
+    }
+
+    private Message buildMimeMessage(String to, String subject, String html) throws Exception {
+        String raw = "From: "+ sendAs +"\r\n"+
+            "To: "+ to +"\r\n"+
+            "Subject: "+ subject +"\r\n"+
+            "MIME-Version: 1.0\r\n"+
+            "Content-Type: text/html; charset=UTF-8\r\n\r\n"+
+            html;
+        Message m = new Message();
+        m.setRaw(Base64.getUrlEncoder().encodeToString(raw.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        return m;
     }
 
     private String escape(String s){ if(s==null) return ""; return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;"); }

@@ -10,21 +10,21 @@ The Apify Instagram Scraper API has been successfully integrated into the MD Aes
 ### ✅ Core Integration Components
 
 1. **Apify Client Configuration**
-   - **File**: `functions/src/index.js`
+   - **File**: `functions/src/index.ts`
    - **Status**: ✅ Complete with proper error handling
    - **Implementation**: Official `apify-client` package with authenticated API access
-   - **API Token**: Configured with user's actual token `apify_api_0iYhpmB1eJZ51b1cbwA8v3117hcRmT4AAIy2`
+   - **API Token**: Configured securely via environment variables
 
 2. **Dependency Management**
    - **File**: `functions/package.json`
    - **Status**: ✅ Complete and verified
-   - **Package**: `"apify-client": "latest"` properly listed in dependencies
+   - **Package**: `"apify-client": "^2.11.0"` properly listed in dependencies
    - **Build Status**: Successfully compiled without errors
 
 3. **Environment Configuration**
-   - **File**: `functions/.env`
+   - **File**: `.env`
    - **Status**: ✅ Complete and secure
-   - **Variable**: `APIFY_TOKEN=apify_api_0iYhpmB1eJZ51b1cbwA8v3117hcRmT4AAIy2`
+   - **Variable**: `APIFY_TOKEN=[SECURE_TOKEN_CONFIGURED]`
    - **Security**: Token properly configured for deployment
 
 4. **Data Model Enhancement**
