@@ -1,12 +1,7 @@
 package com.mdaesthetics.viral.agents;
 
-import com.google.adk.agents.InvocationContext;
-import com.google.adk.agents.LlmAgent;
-import com.google.adk.agents.RunConfig;
-import com.google.adk.artifacts.InMemoryArtifactService;
-import com.google.adk.sessions.InMemorySessionService;
-import com.google.genai.types.Content;
-import com.google.genai.types.Part;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mdaesthetics.viral.ai.OpenRouterClient;
 import com.mdaesthetics.viral.model.TrendAnalysis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -23,46 +17,47 @@ import java.util.stream.Collectors;
 @Component
 public class ProactiveThinkerAgent {
     private static final Logger log = LoggerFactory.getLogger(ProactiveThinkerAgent.class);
-
-    private final LlmAgent agent;
-    private final InMemorySessionService sessionService = new InMemorySessionService();
-    private final InMemoryArtifactService artifactService = new InMemoryArtifactService();
+    
+    private final OpenRouterClient openRouterClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String INSTRUCTION = "You are a strategic medical aesthetics marketing strategist. " +
         "Given a JSON array of recent structured trend analyses, identify macro themes (prevention vs correction, natural look framing, collagen focus, combination therapy interest). " +
         "Then propose EXACTLY three innovative, forward-looking content angles that anticipate the next wave of patient interest for a physician-led clinic. " +
-        "Output JSON: {themes:[string...], angles:[{title:string, rationale:string, suggestedHook:string, pillar:string}]} only.";
+        "Output ONLY JSON: {\"themes\":[\"string\",\"string\",\"string\"], \"angles\":[{\"title\":\"string\", \"rationale\":\"string\", \"suggestedHook\":\"string\", \"pillar\":\"string\"}]}";
 
-    public ProactiveThinkerAgent() {
-        this.agent = LlmAgent.builder()
-            .name("proactive_thinker")
-            .model("gemini-2.5-flash")
-            .description("Derives themes and proposes proactive content angles")
-            .instruction(INSTRUCTION)
-            .build();
+    public ProactiveThinkerAgent(OpenRouterClient openRouterClient) {
+        this.openRouterClient = openRouterClient;
     }
 
     public Map<String,Object> synthesize(List<TrendAnalysis> topAnalyses) {
-        String jsonArray = toJsonArray(topAnalyses); // simplified inline JSON
-        StringBuilder sb = new StringBuilder();
+        String jsonArray = toJsonArray(topAnalyses);
+        
         try {
-            InvocationContext ctx = InvocationContext.create(
-                sessionService,
-                artifactService,
-                "proactive-" + System.currentTimeMillis(),
-                agent,
-                sessionService.createSession("mdaesthetics", "proactive-thinker").blockingGet(),
-                Content.fromParts(Part.fromText(jsonArray)),
-                RunConfig.builder().build()
-            );
-            agent.runAsync(ctx)
-                .timeout(40, TimeUnit.SECONDS)
-                .blockingSubscribe(ev -> ev.content().ifPresent(c -> c.parts().ifPresent(parts -> parts.forEach(p -> p.text().ifPresent(sb::append)))));
-
-            String raw = sb.toString();
-            return Map.of("raw", raw); // parsing deferred; frontend/next step can parse JSON strictly
+            String prompt = INSTRUCTION + "\n\nAnalyze these trend analyses:\n" + jsonArray;
+            String response = openRouterClient.chat(prompt, "z-ai/glm-4.5-air:free", 2.0);
+            
+            // Try to parse as structured JSON
+            String json = extractJson(response);
+            if (json != null) {
+                try {
+                    Map<String, Object> parsed = objectMapper.readValue(json, Map.class);
+                    if (parsed.containsKey("themes") && parsed.containsKey("angles")) {
+                        log.info("Proactive synthesis successful, found {} themes and {} angles", 
+                            ((List<?>) parsed.get("themes")).size(),
+                            ((List<?>) parsed.get("angles")).size());
+                        return parsed;
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to parse proactive thinking JSON: {}", e.getMessage());
+                }
+            }
+            
+            // Return raw response if parsing fails
+            return Map.of("raw", response);
+            
         } catch (Exception e) {
-            log.error("[proactive] failure msg={} ", e.getMessage(), e);
+            log.error("[proactive] failure msg={}", e.getMessage(), e);
             return Map.of("error", e.getMessage());
         }
     }
@@ -70,7 +65,11 @@ public class ProactiveThinkerAgent {
     private String toJsonArray(List<TrendAnalysis> list) {
         return "[" + list.stream().map(this::toJson).collect(Collectors.joining(",")) + "]";
     }
-    private String q(String s){ return "\"" + (s==null?"":s.replace("\\","\\\\").replace("\"","\\\"") ) + "\""; }
+    
+    private String q(String s){ 
+        return "\"" + (s==null?"":s.replace("\\","\\\\").replace("\"","\\\"")) + "\""; 
+    }
+    
     private String toJson(TrendAnalysis ta) {
         return "{" +
             q("category")+":"+q(ta.category())+","+
@@ -79,5 +78,15 @@ public class ProactiveThinkerAgent {
             q("educationalPoint")+":"+q(ta.educationalPoint())+","+
             q("viralityScore")+":"+(ta.viralityScore()==null?0:ta.viralityScore())+","+
             q("relevanceScore")+":"+(ta.relevanceScore()==null?0:ta.relevanceScore())+"}";
+    }
+    
+    private String extractJson(String text) {
+        if (text == null) return null;
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return text.substring(start, end+1);
+        }
+        return null;
     }
 }

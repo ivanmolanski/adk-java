@@ -59,9 +59,9 @@ if [ -n "$APIFY_TOKEN" ]; then
     set_secret "APIFY_TOKEN" "$APIFY_TOKEN"
 fi
 
-# Gemini API Key
-if [ -n "$GEMINI_API_KEY" ]; then
-    set_secret "GEMINI_API_KEY" "$GEMINI_API_KEY"
+# OpenRouter API Key
+if [ -n "$OPENROUTER_API_KEY" ]; then
+    set_secret "OPENROUTER_API_KEY" "$OPENROUTER_API_KEY"
 fi
 
 # Google Custom Search API Key
