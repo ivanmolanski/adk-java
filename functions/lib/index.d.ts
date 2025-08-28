@@ -12,7 +12,7 @@ export declare const dailyTiktokScraper: import("firebase-functions/scheduler").
  * Triggered when new viral research data is added to Firestore
  * Starts the agent analysis pipeline
  */
-export declare const processViralPost: import("firebase-functions/core").CloudFunction<import("firebase-functions/v2/firestore").FirestoreEvent<import("firebase-functions/v2/firestore").QueryDocumentSnapshot | undefined, {
+export declare const processViralPost: import("firebase-functions").CloudFunction<import("firebase-functions/v2/firestore").FirestoreEvent<import("firebase-functions/v2/firestore").QueryDocumentSnapshot | undefined, {
     docId: string;
 }>>;
 /**
