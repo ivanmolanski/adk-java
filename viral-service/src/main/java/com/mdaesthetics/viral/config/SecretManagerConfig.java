@@ -55,7 +55,11 @@ public class SecretManagerConfig {
         String[] criticalSecrets = {
             "GEMINI_API_KEY",
             "SERVICE_ACCOUNT_JSON",
-            "FIREBASE_API_KEY"
+            "FIREBASE_API_KEY",
+            "GOOGLE_CSE_KEY",
+            "APIFY_TOKEN",
+            "TIKTOK_CLIENT_SECRET",
+            "INSTAGRAM_CLIENT_SECRET"
         };
         
         for (String secretName : criticalSecrets) {
@@ -119,6 +123,38 @@ public class SecretManagerConfig {
     @Bean("firebaseApiKey")
     public String getFirebaseApiKey() {
         return getSecret("FIREBASE_API_KEY");
+    }
+    
+    /**
+     * Get Google Custom Search Engine API key from Secret Manager
+     */
+    @Bean("googleCseKey")
+    public String getGoogleCseKey() {
+        return getSecret("GOOGLE_CSE_KEY");
+    }
+    
+    /**
+     * Get Apify token from Secret Manager
+     */
+    @Bean("apifyToken")
+    public String getApifyToken() {
+        return getSecret("APIFY_TOKEN");
+    }
+    
+    /**
+     * Get TikTok client secret from Secret Manager
+     */
+    @Bean("tiktokClientSecret")
+    public String getTiktokClientSecret() {
+        return getSecret("TIKTOK_CLIENT_SECRET");
+    }
+    
+    /**
+     * Get Instagram client secret from Secret Manager
+     */
+    @Bean("instagramClientSecret")
+    public String getInstagramClientSecret() {
+        return getSecret("INSTAGRAM_CLIENT_SECRET");
     }
     
     /**

@@ -17,7 +17,8 @@ out/
 # Functions build artifacts
 functions/lib/
 
-# Environment files
+# Environment files - Never commit sensitive credentials
+.env
 .env.local
 .env.production.local
 .env.development.local
