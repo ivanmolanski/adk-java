@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Instagram, Copy, CheckCircle, AlertCircle, Send } from 'lucide-react';
-// Fix import path by using relative path instead of alias
+// Fix import path by using relative path for reliable resolution
 import { Textarea } from '../components/ui/textarea';
 
 interface SocialMediaPostProps {
