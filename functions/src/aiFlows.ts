@@ -7,13 +7,23 @@
 */
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { z } from 'zod';
-import { logger } from 'firebase-functions/v2';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
   initializeApp();
+}
+
+// Dynamic logger - use console if firebase-functions not available
+function getLogger() {
+  try {
+    const functionsLogger = require('firebase-functions/v2').logger;
+    return functionsLogger;
+  } catch (e) {
+    // Fallback to console if firebase-functions/v2 not available
+    return console;
+  }
 }
 
 // Defer AI initialization until first use (Firebase secrets not available at build time)
@@ -65,6 +75,7 @@ const DISABLE_SAFETY: SafetySetting[] = [
 
 async function generateJson(prompt: string, schemaHint: string, maxRetries = 2, apiKey?: string): Promise<any> {
   const fullPrompt = `${prompt}\n\nRespond ONLY with valid minified JSON matching: ${schemaHint}`;
+  const logger = getLogger();
   let lastErr:any;
   for (let attempt=0; attempt <= maxRetries; attempt++) {
     try {
@@ -116,6 +127,7 @@ export const TrendOutputSchema = z.object({
 });
 
 export async function analyzeTrend(post:any) {
+  const logger = getLogger();
   const postId = post.postId || post.id || `${post.platform}_${post.profile}_${post.timestamp||''}`;
   const cacheRef = firestore.collection('trend_analysis').doc(postId);
   try {
@@ -146,6 +158,7 @@ export async function analyzeTrend(post:any) {
 }
 
 export async function createContent(analysis:any, focusService: string) {
+  const logger = getLogger();
   // Derive a deterministic key from analysis content + focusService
   const base = JSON.stringify(analysis).slice(0,2000); // truncated for stability
   const hash = Buffer.from(base).toString('base64').replace(/[^a-zA-Z0-9]/g,'').slice(0,32);
