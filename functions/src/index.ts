@@ -1,7 +1,7 @@
 // Clean TypeScript file for Firebase Functions v6
 
-// Import Firebase Functions v2 API only
-import * as functions from 'firebase-functions/v2';
+// Import Firebase Functions API (v6+)
+import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { ApifyClient } from 'apify-client';
 import { PubSub } from '@google-cloud/pubsub';
