@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDailyDigest = generateDailyDigest;
 const firestore_1 = require("firebase-admin/firestore");
 const app_1 = require("firebase-admin/app");
-const v2_1 = require("firebase-functions");
+const firebase_functions_1 = require("firebase-functions");
 const aiFlows_1 = require("./aiFlows");
 // Initialize Firebase Admin if not already initialized
 if (!(0, app_1.getApps)().length) {
@@ -49,7 +49,7 @@ async function generateDailyDigest(topN = 8) {
             p.draft = await (0, aiFlows_1.createContent)(p.analysis, focus);
         }
         catch (e) {
-            v2_1.logger.error('Digest post AI processing failed', { id: p.id, error: e.message });
+            firebase_functions_1.logger.error('Digest post AI processing failed', { id: p.id, error: e.message });
         }
     }
     // Compose HTML
@@ -82,7 +82,7 @@ async function generateDailyDigest(topN = 8) {
     await db.collection('mail').add(doc);
     // Persist digest record
     await db.collection('daily_briefs').doc(dateKey).set({ ...doc.metadata, html, recipients });
-    v2_1.logger.info('Daily digest generated', { postCount: selected.length, recipients });
+    firebase_functions_1.logger.info('Daily digest generated', { postCount: selected.length, recipients });
     return { postCount: selected.length, recipients };
 }
 exports.default = { generateDailyDigest };

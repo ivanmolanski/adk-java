@@ -70,7 +70,7 @@ MD_SERVICE_ACCOUNT            ✓ Created 2025-08-25T20:29:12
 ### `functions/src/index.ts`:
 ```typescript
 // Firebase Functions v2 Implementation
-import { onSchedule } from 'firebase-functions/scheduler';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { defineSecret } from 'firebase-functions/params';
 import { ApifyClient } from 'apify-client';
