@@ -1,28 +1,28 @@
-// Clean TypeScript file for Firebase Functions v2
+// Clean TypeScript file for Firebase Functions v6
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { onRequest } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
+// Import Firebase Functions v1 and v2 APIs
+import * as functionsV1 from 'firebase-functions/v1';
+import * as functionsV2 from 'firebase-functions/v2';
+import * as admin from 'firebase-admin';
 import { ApifyClient } from 'apify-client';
-import { initializeApp, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/v2';
 import { PubSub } from '@google-cloud/pubsub';
 import { generateDailyDigest } from './sendDailyDigest';
 import { classifyIntent, summarizeConversation, loadChatSession, storeChatSession } from './aiFlows';
 
 // Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  initializeApp();
+if (!admin.apps.length) {
+  admin.initializeApp();
 }
 
-const db = getFirestore();
+// Get Firestore and PubSub instances
+const db = admin.firestore();
 const pubsub = new PubSub();
 
-// Pub/Sub topic names (can be overridden by env vars later if desired)
-const TOPIC_VIRAL_POST_CREATED = process.env.PUBSUB_TOPIC_VIRAL_POST_CREATED || 'viral-post-created';
-const TOPIC_ORCHESTRATION_COMPLETED = process.env.PUBSUB_TOPIC_ORCHESTRATION_COMPLETED || 'orchestration-completed';
+// Access scheduler and functions from v2 namespace
+const { onSchedule } = functionsV2.scheduler;
+const { onRequest } = functionsV2.https;
+const { onDocumentCreated } = functionsV2.firestore;
+const { defineSecret } = functionsV2.params;
 
 // Define secrets using Firebase Functions v2 approach
 const apifyToken = defineSecret('APIFY_TOKEN');
@@ -31,6 +31,13 @@ const serviceAccountJson = defineSecret('MD_SERVICE_ACCOUNT');
 const googleCseKey = defineSecret('GOOGLE_CSE_KEY');
 const googleCseCx = defineSecret('GOOGLE_CSE_CX');
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
+
+// Pub/Sub topic names (can be overridden by env vars later if desired)
+const TOPIC_VIRAL_POST_CREATED = process.env.PUBSUB_TOPIC_VIRAL_POST_CREATED || 'viral-post-created';
+const TOPIC_ORCHESTRATION_COMPLETED = process.env.PUBSUB_TOPIC_ORCHESTRATION_COMPLETED || 'orchestration-completed';
+
+// Logger is available from the main functions package
+const logger = functionsV2.logger;
 
 // Competitor profiles to monitor (hardcoded as per requirements)
 const competitorProfiles = [
@@ -68,7 +75,7 @@ export const dailyViralScraper = onSchedule({
     });
 
     const allPosts: any[] = [];
-    
+      
     for (const profile of competitorProfiles) {
       logger.info(`Scraping profile: ${profile}`);
       
@@ -337,7 +344,9 @@ export const dailyUnifiedOrchestration = onSchedule({
 /**
  * HTTP endpoint to trigger orchestration on-demand. Optional query param limit.
  */
-export const runOrchestrationHttp = onRequest({ secrets: [googleCseKey, googleCseCx] }, async (req, res) => {
+export const runOrchestrationHttp = onRequest({ 
+  secrets: [googleCseKey, googleCseCx] 
+}, async (req, res) => {
   try {
     const { runOrchestration } = await import('./AgentOrchestrator.js');
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
@@ -382,7 +391,9 @@ export const runOrchestrationHttp = onRequest({ secrets: [googleCseKey, googleCs
  *   queryTerm (string) - optional ad-hoc strategic term to temporarily append to GOOGLE_CSE_TERMS for this run only (e.g. "BBL therapy today")
  *   disableCse=true|false - optionally bypass global CSE augmentation
  */
-export const manualOrchestrate = onRequest({ secrets: [googleCseKey, googleCseCx] }, async (req, res) => {
+export const manualOrchestrate = onRequest({ 
+  secrets: [googleCseKey, googleCseCx] 
+}, async (req, res) => {
   try {
     const { runOrchestration } = await import('./AgentOrchestrator.js');
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 500);
@@ -465,7 +476,9 @@ export const dailyBrief = onSchedule({
  * Chat endpoint with persistent session memory & intent classification.
  * POST body: { sessionId?: string, message: string }
  */
-export const chatCommand = onRequest({ secrets: [geminiApiKey] }, async (req, res) => {
+export const chatCommand = onRequest({ 
+  secrets: [geminiApiKey] 
+}, async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
   const { sessionId: providedId, message } = req.body || {};
   if (!message) { res.status(400).json({ error: 'message required' }); return; }
