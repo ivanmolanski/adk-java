@@ -53,7 +53,7 @@ public class SecretManagerConfig {
      */
     private void preloadSecrets() {
         String[] criticalSecrets = {
-            "GEMINI_API_KEY",
+            "OPENROUTER_API_KEY",
             "SERVICE_ACCOUNT_JSON",
             "FIREBASE_API_KEY"
         };
@@ -98,11 +98,11 @@ public class SecretManagerConfig {
     }
     
     /**
-     * Get the Gemini API key from Secret Manager
+     * Get the OpenRouter API key from Secret Manager
      */
-    @Bean("geminiApiKey")
-    public String getGeminiApiKey() {
-        return getSecret("GEMINI_API_KEY");
+    @Bean("openrouterApiKey")
+    public String getOpenrouterApiKey() {
+        return getSecret("OPENROUTER_API_KEY");
     }
     
     /**
