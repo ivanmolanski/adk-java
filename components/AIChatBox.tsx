@@ -1,6 +1,6 @@
 // AIChatBox.tsx
 import React, { useState, useRef } from 'react';
-import { askGemini } from '../lib/ai';
+import { askOpenRouter } from '../web/lib/openrouter';
 import { Loader2 } from 'lucide-react';
 
 export default function AIChatBox() {
@@ -24,8 +24,8 @@ export default function AIChatBox() {
       const data = await res.json();
       aiMsg = { role: 'ai', text: data.result };
     } else {
-      // Normal Gemini chat
-      const text = await askGemini(input);
+  // Normal chat via OpenRouter
+  const text = await askOpenRouter(input);
       aiMsg = { role: 'ai', text };
     }
     setMessages(msgs => [...msgs, aiMsg]);

@@ -29,7 +29,7 @@ const googleApiKey = defineSecret('MD_API_KEY');
 const serviceAccountJson = defineSecret('MD_SERVICE_ACCOUNT');
 const googleCseKey = defineSecret('GOOGLE_CSE_KEY');
 const googleCseCx = defineSecret('GOOGLE_CSE_CX');
-const geminiApiKey = defineSecret('GEMINI_API_KEY');
+const openrouterApiKey = defineSecret('OPENROUTER_API_KEY');
 
 // Pub/Sub topic names (can be overridden by env vars later if desired)
 const TOPIC_VIRAL_POST_CREATED = process.env.PUBSUB_TOPIC_VIRAL_POST_CREATED || 'viral-post-created';
@@ -218,7 +218,7 @@ export const dailyTiktokScraper = onSchedule({
  */
 export const processViralPost = onDocumentCreated({
   document: 'viral_research/{docId}',
-  secrets: [googleApiKey, serviceAccountJson, geminiApiKey]
+  secrets: [googleApiKey, serviceAccountJson, openrouterApiKey]
 }, async (event) => {
   const snapshot = event.data;
   if (!snapshot) {
@@ -476,7 +476,7 @@ export const dailyBrief = onSchedule({
  * POST body: { sessionId?: string, message: string }
  */
 export const chatCommand = onRequest({ 
-  secrets: [geminiApiKey] 
+  secrets: [openrouterApiKey] 
 }, async (req, res) => {
   if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
   const { sessionId: providedId, message } = req.body || {};
@@ -486,7 +486,7 @@ export const chatCommand = onRequest({
   existing.messages.push({ role: 'user', content: message, at: new Date().toISOString() });
   // Classify intent
   let intentRaw: string = '';
-  try { intentRaw = await classifyIntent(message, geminiApiKey.value()); } catch (e:any) { logger.error('Intent classification failed', e); }
+  try { intentRaw = await classifyIntent(message, openrouterApiKey.value()); } catch (e:any) { logger.error('Intent classification failed', e); }
   let intent = 'UNKNOWN';
   try { intent = JSON.parse(intentRaw).intent || 'UNKNOWN'; } catch {}
   // Optionally trigger orchestration
@@ -503,7 +503,7 @@ export const chatCommand = onRequest({
   // Summarize every 12 messages
   if (existing.messages.length % 12 === 0) {
     try {
-      const summary = await summarizeConversation(existing.messages.slice(-50), geminiApiKey.value());
+      const summary = await summarizeConversation(existing.messages.slice(-50), openrouterApiKey.value());
       existing.summaries.push({ summary, at: new Date().toISOString() });
     } catch (e:any) { logger.error('Conversation summarization failed', e); }
   }

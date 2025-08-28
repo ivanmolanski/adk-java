@@ -4,9 +4,11 @@ import com.mdaesthetics.viral.model.ContentDraft;
 import com.mdaesthetics.viral.model.TrendAnalysis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Message;
 import java.util.Base64;
@@ -115,13 +117,14 @@ public class EmailDispatcherService {
         if (serviceAccountKeyPath==null || serviceAccountKeyPath.isBlank()) {
             throw new IllegalStateException("serviceAccountKeyPath not configured; cannot create Gmail client");
         }
-        GoogleCredential credential = GoogleCredential.fromStream(new java.io.FileInputStream(serviceAccountKeyPath))
+        GoogleCredentials credentials = ServiceAccountCredentials.fromStream(new java.io.FileInputStream(serviceAccountKeyPath))
             .createScoped(java.util.List.of("https://www.googleapis.com/auth/gmail.send"));
-        // If domain-wide delegation needed, uncomment and configure:
-        if (sendAs!=null && !sendAs.isBlank()) {
-            credential = credential.createDelegated(sendAs);
+        // If domain-wide delegation needed, configure delegated user on ServiceAccountCredentials
+        if (sendAs!=null && !sendAs.isBlank() && credentials instanceof ServiceAccountCredentials) {
+            credentials = ((ServiceAccountCredentials) credentials).createDelegated(sendAs);
         }
-        gmailClient = new Gmail.Builder(new NetHttpTransport(), JacksonFactory.getDefaultInstance(), credential)
+        HttpCredentialsAdapter adapter = new HttpCredentialsAdapter(credentials);
+        gmailClient = new Gmail.Builder(new NetHttpTransport(), new GsonFactory(), adapter)
             .setApplicationName("mdaesthetics-viral-service")
             .build();
         return gmailClient;

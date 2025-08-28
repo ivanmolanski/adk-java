@@ -17,20 +17,21 @@ import org.springframework.context.annotation.Profile;
 public class LlmAgentConfig {
     
     @Autowired
-    private SecretManagerConfig secretManagerConfig;
+    @org.springframework.beans.factory.annotation.Qualifier("openRouterApiKey")
+    private String openRouterApiKey;
     
     /**
      * Creates a configured TrendAnalyzer LlmAgent with the proper API key
      */
     @Bean("trendAnalyzerLlmAgent")
     public LlmAgent createTrendAnalyzerAgent() {
-        // Set the API key from Secret Manager
-        System.setProperty("GEMINI_API_KEY", secretManagerConfig.getSecret("GEMINI_API_KEY"));
+        // Set the API key from Secret Manager (now using OpenRouter)
+        System.setProperty("OPENROUTER_API_KEY", openRouterApiKey);
         
         return LlmAgent.builder()
             .name("trend_analyzer")
             .description("Classifies competitor posts and extracts structured viral drivers")
-            .model("gemini-2.5-flash")
+            .model("openrouter-glm-4.5-air")
             .instruction(getTrendAnalyzerInstruction())
             .build();
     }
@@ -40,13 +41,13 @@ public class LlmAgentConfig {
      */
     @Bean("contentCreatorLlmAgent")
     public LlmAgent createContentCreatorAgent() {
-        // Set the API key from Secret Manager
-        System.setProperty("GEMINI_API_KEY", secretManagerConfig.getSecret("GEMINI_API_KEY"));
+        // Set the API key from Secret Manager (now using OpenRouter)
+        System.setProperty("OPENROUTER_API_KEY", openRouterApiKey);
         
         return LlmAgent.builder()
             .name("content_creator")
             .description("Generates superior MD Aesthetics content based on viral analysis")
-            .model("gemini-2.5-flash")
+            .model("openrouter-glm-4.5-air")
             .instruction(getContentCreatorInstruction())
             .build();
     }
@@ -56,13 +57,13 @@ public class LlmAgentConfig {
      */
     @Bean("proactiveThinkerLlmAgent")
     public LlmAgent createProactiveThinkerAgent() {
-        // Set the API key from Secret Manager
-        System.setProperty("GEMINI_API_KEY", secretManagerConfig.getSecret("GEMINI_API_KEY"));
+        // Set the API key from Secret Manager (now using OpenRouter)
+        System.setProperty("OPENROUTER_API_KEY", openRouterApiKey);
         
         return LlmAgent.builder()
             .name("proactive_thinker")
             .description("Synthesizes trends and proposes strategic content angles")
-            .model("gemini-2.5-flash")
+            .model("openrouter-glm-4.5-air")
             .instruction(getProactiveThinkerInstruction())
             .build();
     }

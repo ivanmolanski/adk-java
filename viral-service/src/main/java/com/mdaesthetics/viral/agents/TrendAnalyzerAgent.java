@@ -47,7 +47,7 @@ public class TrendAnalyzerAgent {
         this.agent = LlmAgent.builder()
             .name("trend_analyzer")
             .description("Classifies competitor posts and extracts structured viral drivers")
-            .model("gemini-2.5-flash")
+            .model("openrouter-glm-4.5-air")
             .instruction(INSTRUCTION)
             .build();
     }

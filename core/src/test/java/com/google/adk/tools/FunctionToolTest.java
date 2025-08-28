@@ -711,7 +711,7 @@ public final class FunctionToolTest {
 
   private record DiamondTop(DiamondLeft left, DiamondRight right) {}
 
-  private record ParametrizedCustomType<T extends String>(T value) {}
+  private record ParametrizedCustomType<T>(T value) {}
 
   private record Node(String value, Node next) {}
 }

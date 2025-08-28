@@ -21,8 +21,9 @@ public class ViralEnrichmentAgent {
             platform, videoUrl, hashtags, description
         );
 
+        // Use configured model (migrated to OpenRouter model naming)
         GenerateContentResponse response = genaiClient.models.generateContent(
-            "gemini-2.5-flash",
+            "openrouter-glm-4.5-air",
             prompt,
             null
         );

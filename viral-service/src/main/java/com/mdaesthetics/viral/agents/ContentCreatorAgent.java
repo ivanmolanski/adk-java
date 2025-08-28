@@ -28,7 +28,7 @@ public class ContentCreatorAgent {
         this.agent = LlmAgent.builder()
             .name("content_creator")
             .description("World-class social media strategist for luxury medical spas")
-            .model("gemini-2.5-flash")
+            .model("openrouter-glm-4.5-air")
             .instruction("""
                 You are Dr. Copeland's trusted clinical strategist and content creator. Your persona blends clinical authority with elegant branding.
                 

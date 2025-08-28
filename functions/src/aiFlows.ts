@@ -1,14 +1,8 @@
-// Genkit AI integration for real Gemini model calls (safety disabled per project directive)
-/*
-  NOTE: genkit and @genkit-ai/googleai are optional runtime dependencies in some environments.
-  We defer requiring them until runtime to avoid build-time errors in environments where they're
-  not installed (for example during CI or when running only the web build). This file will
-  throw a clear runtime error if GEMINI_API_KEY is provided but the packages are missing.
-*/
-/* eslint-disable @typescript-eslint/no-var-requires */
+// OpenRouter integration for LLM model calls. We call the OpenRouter Chat Completions endpoint directly using fetch.
 import { z } from 'zod';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import fetch from 'node-fetch';
 
 // Initialize Firebase Admin if not already initialized
 if (!getApps().length) {
@@ -27,41 +21,10 @@ function getLogger() {
 }
 
 // Defer AI initialization until first use (Firebase secrets not available at build time)
-let ai: any = null;
-
-function getAI(apiKey?: string) {
-  if (!ai) {
-    const key = apiKey || process.env.GEMINI_API_KEY;
-    if (!key) {
-      throw new Error('GEMINI_API_KEY environment variable is required for Gemini model access.');
-    }
-
-    // Dynamically require genkit and the googleAI plugin so missing modules don't break the
-    // static type-check/build step. Provide a clear error if they're absent at runtime.
-    let genkitLib: any;
-    let googleAIPlugin: any;
-    try {
-      // Use require to avoid top-level import resolution at build time
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      genkitLib = require('genkit');
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      googleAIPlugin = require('@genkit-ai/googleai');
-      // plugin export may be default or named
-      googleAIPlugin = googleAIPlugin?.googleAI || googleAIPlugin?.default || googleAIPlugin;
-    } catch (e:any) {
-      throw new Error('Missing runtime dependency: genkit and/or @genkit-ai/googleai are not installed. Install them to enable Gemini model support.');
-    }
-
-    // Initialize genkit with the googleAI plugin
-    ai = (typeof genkitLib === 'function' ? genkitLib : genkitLib.genkit)({
-      plugins: [googleAIPlugin({ apiKey: key })],
-    });
-  }
-  return ai;
-}
-
-// Single enforced model per directive (NO FALLBACK ALLOWED)
-const MODEL: Readonly<string> = 'gemini-2.5-flash';
+// OpenRouter integration (replaces Gemini-genkit approach)
+// We'll call the OpenRouter Chat Completions endpoint directly using fetch.
+const OPENROUTER_MODEL = 'z-ai/glm-4.5-air:free';
+const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
 type SafetySetting = { category: string; threshold: string };
 
@@ -74,28 +37,54 @@ const DISABLE_SAFETY: SafetySetting[] = [
 ].map(c => ({ category: c, threshold: 'BLOCK_NONE' }));
 
 async function generateJson(prompt: string, schemaHint: string, maxRetries = 2, apiKey?: string): Promise<any> {
-  const fullPrompt = `${prompt}\n\nRespond ONLY with valid minified JSON matching: ${schemaHint}`;
   const logger = getLogger();
-  let lastErr:any;
-  for (let attempt=0; attempt <= maxRetries; attempt++) {
+  const fullPrompt = `${prompt}\n\nRespond ONLY with valid minified JSON matching: ${schemaHint}`;
+  const key = apiKey || process.env.OPENROUTER_API_KEY;
+  if (!key) {
+    throw new Error('OPENROUTER_API_KEY environment variable is required for OpenRouter model access.');
+  }
+  let lastErr: any;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      logger.debug('AI generate attempt', { attempt, model: MODEL });
-      const aiInstance = getAI(apiKey);
-      const resp: any = await aiInstance.generate({
-        model: MODEL,
-        prompt: fullPrompt,
-        config: { safetySettings: DISABLE_SAFETY }
+      logger.debug('OpenRouter generate attempt', { attempt, model: OPENROUTER_MODEL });
+      const body = {
+        model: OPENROUTER_MODEL,
+        messages: [{ role: 'user', content: fullPrompt }],
+        temperature: 2.0,
+        max_tokens: 2000
+      } as any;
+
+      const resp = await fetch(OPENROUTER_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body),
+        timeout: 60000
       });
-      const text = resp.text ? resp.text() : resp.response?.text?.() || resp.outputText || '';
-      const jsonStart = text.indexOf('{');
-      const jsonEnd = text.lastIndexOf('}');
+
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(`OpenRouter error: ${resp.status} ${txt}`);
+      }
+
+      const data = await resp.json();
+      // normalize response: choices[].message.content or choices[].message
+      const choice = data?.choices?.[0];
+      const text = choice?.message?.content || choice?.message || data?.output || ''; 
+      const textStr = typeof text === 'string' ? text : JSON.stringify(text);
+      const jsonStart = textStr.indexOf('{');
+      const jsonEnd = textStr.lastIndexOf('}');
       if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON braces in output');
-      const candidate = text.substring(jsonStart, jsonEnd+1).trim();
+      const candidate = textStr.substring(jsonStart, jsonEnd + 1).trim();
       return JSON.parse(candidate);
-    } catch (e:any) {
+    } catch (e: any) {
       lastErr = e;
-      logger.error('AI generation attempt failed', { attempt, error: e.message });
+      logger.error('OpenRouter generation attempt failed', { attempt, error: e?.message || e });
       if (attempt === maxRetries) break;
+      // small backoff
+      await new Promise(r => setTimeout(r, 500 * (attempt + 1)));
     }
   }
   return { error: 'generation_failed', details: String(lastErr), rawPrompt: prompt };

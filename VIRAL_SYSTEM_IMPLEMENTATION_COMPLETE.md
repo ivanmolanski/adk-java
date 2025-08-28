@@ -6,16 +6,25 @@ The entire viral content analysis and social media posting system has been succe
 
 ## 🏗️ System Architecture
 
-### Core Components Implemented:
+### Core Components Implemented
+
 1. **Viral Analysis Pipeline** - Analyzes competitor content for engagement patterns
-2. **Content Creation Engine** - Generates MD Aesthetics branded content 
+
+2. **Content Creation Engine** - Generates MD Aesthetics branded content
+
 3. **Social Media OAuth2 Integration** - TikTok & Instagram authentication
+
 4. **REST API Endpoints** - Complete API for all operations
+
 5. **Web Interface** - Login pages and dashboard for social media management
+
 6. **Cost-Aware Caching Layer** - Reuses existing TrendAnalysis and ContentDraft objects to avoid duplicate LLM calls
+
 7. **Observability & Metrics Suite** - Micrometer-based counters and timers for LLM, workflow, caching, and email dispatch
 
+ 
 ### New Metrics (Micrometer)
+
 | Metric Name | Type | Purpose |
 |-------------|------|---------|
 | trendAnalysis.cache.hit | Counter | Cache reuse for existing TrendAnalysis (LLM cost saved) |
@@ -33,10 +42,14 @@ The entire viral content analysis and social media posting system has been succe
 
 All metrics are currently backed by a SimpleMeterRegistry; production should replace with Prometheus/OpenTelemetry exporter.
 
+ 
 ### Dependency Optimization
+
 - Removed unused `spring-boot-starter-webflux` after confirming no reactive endpoints—reduces footprint and startup time.
 
+ 
 ### Caching Strategy
+
 | Stage | Cache Key | Storage | Reuse Condition |
 |-------|-----------|---------|-----------------|
 | Trend Analysis | competitorPost.id | Firestore (latest doc lookup) | Existing analysis found for post |
@@ -46,15 +59,17 @@ Benefits: LLM token cost reduction, lower latency, deterministic reuse for idemp
 
 ## 🚀 Current Operational Status
 
-### ✅ Working Endpoints (All Tested & Functional):
+### ✅ Working Endpoints (All Tested & Functional)
 
 **Viral Analysis API:**
+
 - `POST /api/viral/analyze` - Analyze viral content for engagement patterns
 - `POST /api/viral/content/create` - Generate MD Aesthetics branded content
 - `POST /api/viral/pipeline/process` - Full end-to-end processing
 - `POST /api/viral/qa/validate` - Quality assurance validation
 
 **Social Media API:**
+
 - `GET /api/social/platforms` - List supported platforms (TikTok, Instagram)
 - `GET /api/social/auth/status` - Check authentication status
 - `POST /api/social/tiktok/post/video` - Post video to TikTok
@@ -62,11 +77,13 @@ Benefits: LLM token cost reduction, lower latency, deterministic reuse for idemp
 - `POST /api/social/post/generated` - Post AI-generated content
 
 **Web Interface:**
+
 - `GET /login` - Social media login page
 - `GET /dashboard` - Management dashboard
 - OAuth2 authentication flows for both platforms
 
-### 🎯 Test Results:
+### 🎯 Test Results
+
 ```bash
 # Viral Analysis Working Perfect:
 curl -X POST -H "Content-Type: application/json" \
@@ -93,21 +110,26 @@ curl -X POST -H "Content-Type: application/json" \
 
 To enable actual social media posting, you need to obtain API credentials:
 
-### TikTok Developer Setup:
+### TikTok Developer Setup
+
 1. Go to [TikTok Developer Portal](https://developers.tiktok.com/)
 2. Create a new app for "MD Aesthetics Content Manager"
 3. Set redirect URI: `http://localhost:8081/viral-service/oauth2/callback/tiktok`
 4. Get your `Client ID` and `Client Secret`
 
-### Instagram Developer Setup:
+### Instagram Developer Setup
+
 1. Go to [Facebook Developers](https://developers.facebook.com/apps/)
 2. Create a new app with Instagram Graph API access
 3. Set redirect URI: `http://localhost:8081/viral-service/oauth2/callback/instagram`
 4. Get your `App ID` and `App Secret`
 
-### Configuration Steps:
+### Configuration Steps
+
 1. Copy `.env.example` to `.env`
+
 2. Replace the placeholder values:
+
 ```bash
 TIKTOK_CLIENT_ID=your-actual-tiktok-client-id
 TIKTOK_CLIENT_SECRET=your-actual-tiktok-client-secret
@@ -115,34 +137,42 @@ INSTAGRAM_CLIENT_ID=your-actual-instagram-client-id
 INSTAGRAM_CLIENT_SECRET=your-actual-instagram-client-secret
 ```
 
+
 ## 🎬 How to Use the Complete System
 
-### 1. Start the Service:
+### 1. Start the Service
+
 ```bash
 cd /workspaces/adk-java/viral-service
 mvn spring-boot:run
 ```
 
-### 2. Analyze Competitor Content:
+### 2. Analyze Competitor Content
+
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d '{"content": "Your competitor content here", "engagement": {...}}' \
   "http://localhost:8081/viral-service/api/viral/analyze"
 ```
 
-### 3. Generate MD Aesthetics Content:
+### 3. Generate MD Aesthetics Content
+
 ```bash
 curl -X POST -H "Content-Type: application/json" \
   -d '{"analyzed_content": {...}, "brand_guidelines": "..."}' \
   "http://localhost:8081/viral-service/api/viral/content/create"
 ```
 
-### 4. Login to Social Media Platforms:
+### 4. Login to Social Media Platforms
+
 - Open: `http://localhost:8081/viral-service/login`
+
 - Click "Login with TikTok" or "Login with Instagram"
+
 - Complete OAuth2 authorization
 
-### 5. Post Generated Content:
+### 5. Post Generated Content
+
 ```bash
 # After authentication, post to TikTok:
 curl -X POST -H "Content-Type: multipart/form-data" \
@@ -175,27 +205,43 @@ curl -X POST -H "Content-Type: multipart/form-data" \
 ## 🧪 Testing & Quality Summary
 
 ### Automated Test Coverage Additions
+
 - Workflow cache reuse & counters validation
+
 - Metrics exposure (Actuator) presence checks
+
 - Pub/Sub push simulation (analyze-new-post)
+
 - LLM service instrumentation (success, empty prompt, latency)
+
 - Email dispatcher metrics (simulation path)
+
 - Error counter path included in pipeline
 
 ### GUI Test Plan (Next.js Frontend)
+
 Manual Smoke (local dev):
+
 1. Load Dashboard: verify calls to `/viral-service/api/ai/health` succeed.
+
 2. Execute AI Chat: send prompt, confirm response + network latency < 5s under dev key.
+
 3. Trigger On-Demand Analysis (if button exposed): ensure POST to pipeline returns draft id.
+
 4. Metrics Drill (optional): curl backend metrics endpoint for real-time counters after actions.
+
 5. Auth Flow (once credentials supplied): initiate TikTok/Instagram OAuth, verify redirect & token persistence.
 
 Automatable Candidates:
+
 - Page availability (200 responses) for `/`, `/dashboard`, `/login`.
+
 - API contract tests using Playwright (form submit → expected JSON structure).
+
 - Visual regression for dashboard key panels (trend table, draft preview).
 
 Readiness Gates:
+
 | Gate | Criteria |
 |------|----------|
 | Build | `mvn test` + `npm run build` pass |
@@ -205,44 +251,66 @@ Readiness Gates:
 | LLM | Success + latency timers increment (test) |
 
 ## 🔐 Secrets & Key Management (Action Required)
+
 Current `.env` contains live-looking API keys (Gemini, Firebase, CSE, Apify). For production hardening:
+
 1. **Rotate** exposed keys immediately (treat as compromised once committed).
-2. Store rotated values in **Google Secret Manager** (names: `GEMINI_API_KEY`, `FIREBASE_API_KEY`, `GOOGLE_CSE_KEY`, `APIFY_TOKEN`).
+
+2. Store rotated values in **Google Secret Manager** (names: `OPENROUTER_API_KEY`, `FIREBASE_API_KEY`, `GOOGLE_CSE_KEY`, `APIFY_TOKEN`).
+
 3. Remove plaintext from repo; keep only local `.env` template with placeholder tokens.
+
 4. Grant least-privilege IAM to Cloud Run service account for secrets access.
+
 5. Enable audit logging for secret access events.
 
 Sample Secret Manager fetch (already implemented for Gemini via `SecretManagerConfig`). Extend for remaining keys before production deploy.
 
 ## 📈 Observability Roadmap (Next Iterations)
+
 - Add histogram buckets for `workflow.execute.timer` (p50/p90/p99 export).
+
 - Integrate alerting: trigger on `workflow.error.count` rate & sustained absence of `email.sent.count`.
+
 - Correlate LLM latency with cache miss rate (dashboard panel).
 
 ## 🧩 Future Enhancements
+
 - Persist agent reasoning artifacts for audit.
+
 - Add retry logic + exponential backoff for email dispatch failures.
+
 - Implement proactive trend aggregation email (weekly summary trends vs daily).
 
 ## 🎯 Business Value Delivered
 
-### For MD Aesthetics:
+### For MD Aesthetics
+
 1. **Competitor Intelligence**: Automatically identify what content is working for competitors
+
 2. **Content Generation**: AI creates on-brand content following medical spa compliance rules
+
 3. **Social Media Management**: Single interface to post to TikTok and Instagram
+
 4. **Brand Consistency**: All generated content follows MD Aesthetics voice and guidelines
+
 5. **Automation Ready**: Complete pipeline from analysis to posting
 
-### Key Differentiators:
+### Key Differentiators
+
 - **Medical Compliance**: Never uses "Botox", uses "Tox"/"Neuromodulator"
+
 - **Educational Focus**: Explains the science behind treatments
+
 - **Local Targeting**: Toronto/Whitby geo-targeting built in
+
 - **Professional Tone**: Maintains medical authority vs spa fluff
 
 ## 🔧 Technical Architecture Details
 
-### Spring Boot Application Structure:
-```
+### Spring Boot Application Structure
+
+```text
 viral-service/
 ├── controller/
 │   ├── SocialMediaController.java     # Social media API endpoints
@@ -259,10 +327,14 @@ viral-service/
     └── SocialMediaPost.java           # Data models
 ```
 
-### Security Configuration:
+### Security Configuration
+
 - OAuth2 authorization code flow
+
 - CORS enabled for API access
+
 - Secure credential management
+
 - Session-based authentication
 
 ## 📋 Production Deployment Checklist
@@ -280,7 +352,7 @@ viral-service/
 
 ## 🎉 Summary
 
-**The complete viral content analysis and social media posting system for MD Aesthetics is fully implemented and operational.** 
+**The complete viral content analysis and social media posting system for MD Aesthetics is fully implemented and operational.**
 
 The only remaining step is obtaining OAuth2 credentials from TikTok and Instagram developer portals. Once those credentials are configured, the system will be ready for production use with full posting capabilities to both platforms.
 

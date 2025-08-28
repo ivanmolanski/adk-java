@@ -37,10 +37,10 @@ public class AiService {
     if (props.apiKey() == null || props.apiKey().isBlank()) {
       log.warn("GENAI_API_KEY / GOOGLE_API_KEY not provided at startup; LLM calls will fallback");
     }
-    this.agent = LlmAgent.builder()
-        .name("ai_chat")
-        .description("General chat endpoint for MDAesthetics Virality system")
-        .model("gemini-2.5-flash")
+  this.agent = LlmAgent.builder()
+    .name("ai_chat")
+    .description("General chat endpoint for MDAesthetics Virality system")
+    .model("openrouter-glm-4.5-air")
         .instruction("You are a clinically authoritative yet approachable assistant for a physician-led medical aesthetics practice. Keep answers concise, evidence-based, and aligned with professional standards. Avoid definitive medical diagnosis; encourage consultation.")
         .build();
     this.llmLatencyTimer = meterRegistry.timer("llm.call.latency");
@@ -112,7 +112,7 @@ public class AiService {
   }
 
   public String getModelName() {
-    return "gemini-2.5-flash";
+    return "openrouter-glm-4.5-air";
   }
 
   public String diagnosticProbe() {

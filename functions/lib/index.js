@@ -61,7 +61,7 @@ const googleApiKey = (0, params_1.defineSecret)('MD_API_KEY');
 const serviceAccountJson = (0, params_1.defineSecret)('MD_SERVICE_ACCOUNT');
 const googleCseKey = (0, params_1.defineSecret)('GOOGLE_CSE_KEY');
 const googleCseCx = (0, params_1.defineSecret)('GOOGLE_CSE_CX');
-const geminiApiKey = (0, params_1.defineSecret)('GEMINI_API_KEY');
+const openrouterApiKey = (0, params_1.defineSecret)('OPENROUTER_API_KEY');
 // Competitor profiles to monitor (hardcoded as per requirements)
 const competitorProfiles = [
     '_thelookaesthetics',
@@ -226,7 +226,7 @@ exports.dailyTiktokScraper = (0, scheduler_1.onSchedule)({
  */
 exports.processViralPost = (0, firestore_1.onDocumentCreated)({
     document: 'viral_research/{docId}',
-    secrets: [googleApiKey, serviceAccountJson, geminiApiKey]
+    secrets: [googleApiKey, serviceAccountJson, openrouterApiKey]
 }, async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
@@ -471,7 +471,7 @@ exports.dailyBrief = (0, scheduler_1.onSchedule)({
  * Chat endpoint with persistent session memory & intent classification.
  * POST body: { sessionId?: string, message: string }
  */
-exports.chatCommand = (0, https_1.onRequest)({ secrets: [geminiApiKey] }, async (req, res) => {
+exports.chatCommand = (0, https_1.onRequest)({ secrets: [openrouterApiKey] }, async (req, res) => {
     if (req.method !== 'POST') {
         res.status(405).json({ error: 'POST only' });
         return;
@@ -487,7 +487,7 @@ exports.chatCommand = (0, https_1.onRequest)({ secrets: [geminiApiKey] }, async 
     // Classify intent
     let intentRaw = '';
     try {
-        intentRaw = await (0, aiFlows_1.classifyIntent)(message, geminiApiKey.value());
+        intentRaw = await (0, aiFlows_1.classifyIntent)(message, openrouterApiKey.value());
     }
     catch (e) {
         v2_1.logger.error('Intent classification failed', e);
@@ -514,7 +514,7 @@ exports.chatCommand = (0, https_1.onRequest)({ secrets: [geminiApiKey] }, async 
     // Summarize every 12 messages
     if (existing.messages.length % 12 === 0) {
         try {
-            const summary = await (0, aiFlows_1.summarizeConversation)(existing.messages.slice(-50), geminiApiKey.value());
+        const summary = await (0, aiFlows_1.summarizeConversation)(existing.messages.slice(-50), openrouterApiKey.value());
             existing.summaries.push({ summary, at: new Date().toISOString() });
         }
         catch (e) {

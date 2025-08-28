@@ -36,7 +36,7 @@ public class ProactiveThinkerAgent {
     public ProactiveThinkerAgent() {
         this.agent = LlmAgent.builder()
             .name("proactive_thinker")
-            .model("gemini-2.5-flash")
+            .model("openrouter-glm-4.5-air")
             .description("Derives themes and proposes proactive content angles")
             .instruction(INSTRUCTION)
             .build();

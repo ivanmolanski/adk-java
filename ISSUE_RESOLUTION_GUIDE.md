@@ -3,12 +3,17 @@
 ## Java Code Issues
 
 ### Unused Variables
+
 Several Java classes have unused variables. These can be fixed by:
+Several Java classes have unused variables. These can be fixed by:
+
 1. Removing the variable declaration if it's not needed
+
 2. Using the variable in the code
 3. Prefixing with `@SuppressWarnings("unused")` if intentionally unused
 
 Examples:
+
 ```java
 // In CallbackContext.java
 var unused = // REMOVE THIS LINE OR USE THE VARIABLE
@@ -19,12 +24,17 @@ storageClient.delete(blobIdsToDelete);
 ```
 
 ### Null Pointer Access
+
 Several methods have potential null pointer access. Fix by:
+
 1. Adding null checks before method calls
+
 2. Using the Optional API
+
 3. Using the null-safe call pattern
 
 Example:
+
 ```java
 // BEFORE:
 activeTool.task().dispose();
@@ -36,6 +46,7 @@ if (activeTool.task() != null) {
 ```
 
 ### Deprecated Method Usage
+
 Update code to use non-deprecated alternatives:
 
 ```java
@@ -49,9 +60,14 @@ RequestBody.create(requestJson, MEDIA_TYPE_APPLICATION_JSON)
 ## Markdown Documentation Issues
 
 The markdown linting errors can be fixed by:
+The markdown linting errors can be fixed by:
+
 1. Adding blank lines before and after headings
+
 2. Removing trailing punctuation from headings
+
 3. Adding blank lines around code blocks
+
 4. Ensuring files end with a newline
 
 ## Next.js Web App
