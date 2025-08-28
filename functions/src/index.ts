@@ -1,8 +1,7 @@
 // Clean TypeScript file for Firebase Functions v6
 
-// Import Firebase Functions v1 and v2 APIs
-import * as functionsV1 from 'firebase-functions/v1';
-import * as functionsV2 from 'firebase-functions/v2';
+// Import Firebase Functions v2 API only
+import * as functions from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import { ApifyClient } from 'apify-client';
 import { PubSub } from '@google-cloud/pubsub';
@@ -18,11 +17,11 @@ if (!admin.apps.length) {
 const db = admin.firestore();
 const pubsub = new PubSub();
 
-// Access scheduler and functions from v2 namespace
-const { onSchedule } = functionsV2.scheduler;
-const { onRequest } = functionsV2.https;
-const { onDocumentCreated } = functionsV2.firestore;
-const { defineSecret } = functionsV2.params;
+// Access scheduler and functions from functions namespace
+const { onSchedule } = functions.scheduler;
+const { onRequest } = functions.https;
+const { onDocumentCreated } = functions.firestore;
+const { defineSecret } = functions.params;
 
 // Define secrets using Firebase Functions v2 approach
 const apifyToken = defineSecret('APIFY_TOKEN');
@@ -37,7 +36,7 @@ const TOPIC_VIRAL_POST_CREATED = process.env.PUBSUB_TOPIC_VIRAL_POST_CREATED || 
 const TOPIC_ORCHESTRATION_COMPLETED = process.env.PUBSUB_TOPIC_ORCHESTRATION_COMPLETED || 'orchestration-completed';
 
 // Logger is available from the main functions package
-const logger = functionsV2.logger;
+const logger = functions.logger;
 
 // Competitor profiles to monitor (hardcoded as per requirements)
 const competitorProfiles = [
