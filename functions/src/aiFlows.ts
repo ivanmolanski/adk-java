@@ -8,7 +8,13 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 import { z } from 'zod';
 import { logger } from 'firebase-functions/v2';
+import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+
+// Initialize Firebase Admin if not already initialized
+if (!getApps().length) {
+  initializeApp();
+}
 
 // Defer AI initialization until first use (Firebase secrets not available at build time)
 let ai: any = null;

@@ -17,7 +17,12 @@ exports.loadChatSession = loadChatSession;
 /* eslint-disable @typescript-eslint/no-var-requires */
 const zod_1 = require("zod");
 const v2_1 = require("firebase-functions/v2");
+const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
+// Initialize Firebase Admin if not already initialized
+if (!(0, app_1.getApps)().length) {
+    (0, app_1.initializeApp)();
+}
 // Defer AI initialization until first use (Firebase secrets not available at build time)
 let ai = null;
 function getAI(apiKey) {
