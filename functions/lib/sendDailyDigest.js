@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateDailyDigest = generateDailyDigest;
 const firestore_1 = require("firebase-admin/firestore");
 const app_1 = require("firebase-admin/app");
-const v2_1 = require("firebase-functions/v2");
+const v2_1 = require("firebase-functions");
 const aiFlows_1 = require("./aiFlows");
 // Initialize Firebase Admin if not already initialized
 if (!(0, app_1.getApps)().length) {
