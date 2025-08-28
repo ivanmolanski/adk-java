@@ -1,0 +1,29 @@
+name: Maven Build & Tests
+
+on:
+  push:
+    branches: [ main, '**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Show Java & Maven versions
+        run: |
+          java -version
+          mvn -v
+
+      - name: Run Maven tests
+        run: mvn -B -T 1C clean test
