@@ -16,12 +16,22 @@ exports.loadChatSession = loadChatSession;
 */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const zod_1 = require("zod");
-const v2_1 = require("firebase-functions/v2");
 const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 // Initialize Firebase Admin if not already initialized
 if (!(0, app_1.getApps)().length) {
     (0, app_1.initializeApp)();
+}
+// Dynamic logger - use console if firebase-functions not available
+function getLogger() {
+    try {
+        const functionsLogger = require('firebase-functions/v2').logger;
+        return functionsLogger;
+    }
+    catch (e) {
+        // Fallback to console if firebase-functions/v2 not available
+        return console;
+    }
 }
 // Defer AI initialization until first use (Firebase secrets not available at build time)
 let ai = null;
@@ -65,10 +75,11 @@ const DISABLE_SAFETY = [
 ].map(c => ({ category: c, threshold: 'BLOCK_NONE' }));
 async function generateJson(prompt, schemaHint, maxRetries = 2, apiKey) {
     const fullPrompt = `${prompt}\n\nRespond ONLY with valid minified JSON matching: ${schemaHint}`;
+    const logger = getLogger();
     let lastErr;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-            v2_1.logger.debug('AI generate attempt', { attempt, model: MODEL });
+            logger.debug('AI generate attempt', { attempt, model: MODEL });
             const aiInstance = getAI(apiKey);
             const resp = await aiInstance.generate({
                 model: MODEL,
@@ -85,7 +96,7 @@ async function generateJson(prompt, schemaHint, maxRetries = 2, apiKey) {
         }
         catch (e) {
             lastErr = e;
-            v2_1.logger.error('AI generation attempt failed', { attempt, error: e.message });
+            logger.error('AI generation attempt failed', { attempt, error: e.message });
             if (attempt === maxRetries)
                 break;
         }
@@ -115,6 +126,7 @@ exports.TrendOutputSchema = zod_1.z.object({
     summary: zod_1.z.string().optional()
 });
 async function analyzeTrend(post) {
+    const logger = getLogger();
     const postId = post.postId || post.id || `${post.platform}_${post.profile}_${post.timestamp || ''}`;
     const cacheRef = firestore.collection('trend_analysis').doc(postId);
     try {
@@ -124,28 +136,29 @@ async function analyzeTrend(post) {
             if (data) {
                 // Optional TTL: 48h
                 if (!data.cachedAt || Date.now() - new Date(data.cachedAt).getTime() < 48 * 3600 * 1000) {
-                    v2_1.logger.debug('Trend analysis cache hit', { postId });
+                    logger.debug('Trend analysis cache hit', { postId });
                     return data.analysis;
                 }
             }
         }
     }
     catch (e) {
-        v2_1.logger.error('Trend analysis cache read failed', { postId, error: e.message });
+        logger.error('Trend analysis cache read failed', { postId, error: e.message });
     }
     const schema = '{"category":"one of Process Demystified | Science Explained | Transformation | Myth Busting","hook":"string","cta":"string","educationalPoint":"string","summary":"1 sentence overview"}';
     const prompt = `You are a social media analyst for a physician-led clinical aesthetics brand. Classify and extract structured insights.\nPOST DATA (JSON):\n${JSON.stringify(post).slice(0, 4000)}\nReturn JSON only.`;
     const analysis = await generateJson(prompt, schema);
     try {
         await cacheRef.set({ analysis, cachedAt: new Date().toISOString() }, { merge: true });
-        v2_1.logger.debug('Trend analysis cached', { postId });
+        logger.debug('Trend analysis cached', { postId });
     }
     catch (e) {
-        v2_1.logger.error('Trend analysis cache write failed', { postId, error: e.message });
+        logger.error('Trend analysis cache write failed', { postId, error: e.message });
     }
     return analysis;
 }
 async function createContent(analysis, focusService) {
+    const logger = getLogger();
     // Derive a deterministic key from analysis content + focusService
     const base = JSON.stringify(analysis).slice(0, 2000); // truncated for stability
     const hash = Buffer.from(base).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 32);
@@ -156,13 +169,13 @@ async function createContent(analysis, focusService) {
         if (snap.exists) {
             const data = snap.data();
             if (data && data.cachedAt && Date.now() - new Date(data.cachedAt).getTime() < 48 * 3600 * 1000) {
-                v2_1.logger.debug('Content draft cache hit', { key });
+                logger.debug('Content draft cache hit', { key });
                 return data.draft;
             }
         }
     }
     catch (e) {
-        v2_1.logger.error('Content draft cache read failed', { key, error: e.message });
+        logger.error('Content draft cache read failed', { key, error: e.message });
     }
     const schema = '{"caption":"instagram+tik tok optimized caption <= 2100 chars","hashtags":"array of 8-18 lowercase hashtags without # symbol","cta":"clear consultation CTA","rawHook":"first 3 seconds hook text"}';
     const prompt = `You are Dr. Copeland's trusted clinical strategist. Using the analyzed viral pattern below, create a superior on-brand post pivoting to service: ${focusService}.\nBRAND GUARDRAILS: Clinical, authoritative, educational, results-focused. Replace any occurrence of Botox with Neuromodulator or Tox. Must include one educational mechanism explanation and avoid fluff.\nANALYSIS JSON: ${JSON.stringify(analysis).slice(0, 4000)}\nReturn ONLY JSON.`;
@@ -175,10 +188,10 @@ async function createContent(analysis, focusService) {
     }
     try {
         await cacheRef.set({ draft: result, cachedAt: new Date().toISOString(), focusService }, { merge: true });
-        v2_1.logger.debug('Content draft cached', { key });
+        logger.debug('Content draft cached', { key });
     }
     catch (e) {
-        v2_1.logger.error('Content draft cache write failed', { key, error: e.message });
+        logger.error('Content draft cache write failed', { key, error: e.message });
     }
     return result;
 }
