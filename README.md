@@ -38,6 +38,17 @@ debugging, versioning, and deployment anywhere – from your laptop to the cloud
 -   **Modular Multi-Agent Systems**: Design scalable applications by composing
     multiple specialized agents into flexible hierarchies.
 
+## 🔒 Security & Setup
+
+**Important:** This project requires API credentials that must be kept secure.
+
+### Quick Start
+1. Copy environment template: `cp .env.example .env`
+2. Fill in your API credentials in `.env` (never commit this file!)
+3. For production, use Google Cloud Secret Manager
+
+📖 **See [SECURITY.md](SECURITY.md) for complete setup instructions**
+
 ## 🚀 Installation
 
 If you're using Maven, add the following to your dependencies:
