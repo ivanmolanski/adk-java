@@ -31,8 +31,10 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/functions/**"
     ],
+    "cleanUrls": true,
     "rewrites": [
       {
         "source": "**",
