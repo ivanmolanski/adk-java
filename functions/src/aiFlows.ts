@@ -18,7 +18,7 @@ if (!getApps().length) {
 // Dynamic logger - use console if firebase-functions not available
 function getLogger() {
   try {
-    const functionsLogger = require('firebase-functions').logger;
+    const functionsLogger = require('firebase-functions/v2').logger;
     return functionsLogger;
   } catch (e) {
     // Fallback to console if firebase-functions not available

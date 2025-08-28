@@ -1,13 +1,13 @@
 // Clean TypeScript file for Firebase Functions v2
 
-import { onSchedule } from 'firebase-functions/scheduler';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import { ApifyClient } from 'apify-client';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions';
+import { logger } from 'firebase-functions/v2';
 import { PubSub } from '@google-cloud/pubsub';
 import { generateDailyDigest } from './sendDailyDigest';
 import { classifyIntent, summarizeConversation, loadChatSession, storeChatSession } from './aiFlows';

@@ -1,6 +1,6 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp, getApps } from 'firebase-admin/app';
-import { logger } from 'firebase-functions';
+import { logger } from 'firebase-functions/v2';
 import { analyzeTrend, createContent } from './aiFlows';
 
 // Initialize Firebase Admin if not already initialized
