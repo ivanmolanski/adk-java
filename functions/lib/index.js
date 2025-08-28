@@ -1,5 +1,5 @@
 "use strict";
-// Clean TypeScript file for Firebase Functions v2
+// Clean TypeScript file for Firebase Functions v6
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -35,33 +35,38 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatCommand = exports.dailyBrief = exports.manualOrchestrate = exports.runOrchestrationHttp = exports.dailyUnifiedOrchestration = exports.healthCheck = exports.processViralPost = exports.dailyTiktokScraper = exports.dailyViralScraper = void 0;
-const scheduler_1 = require("firebase-functions/scheduler");
-const firestore_1 = require("firebase-functions/v2/firestore");
-const https_1 = require("firebase-functions/v2/https");
-const params_1 = require("firebase-functions/params");
+// Import Firebase Functions base API
+const functions = __importStar(require("firebase-functions"));
+const admin = __importStar(require("firebase-admin"));
 const apify_client_1 = require("apify-client");
-const app_1 = require("firebase-admin/app");
-const firestore_2 = require("firebase-admin/firestore");
-const v2_1 = require("firebase-functions");
 const pubsub_1 = require("@google-cloud/pubsub");
 const sendDailyDigest_1 = require("./sendDailyDigest");
 const aiFlows_1 = require("./aiFlows");
 // Initialize Firebase Admin if not already initialized
-if (!(0, app_1.getApps)().length) {
-    (0, app_1.initializeApp)();
+if (!admin.apps.length) {
+    admin.initializeApp();
 }
-const db = (0, firestore_2.getFirestore)();
+// Get Firestore and PubSub instances
+const db = admin.firestore();
 const pubsub = new pubsub_1.PubSub();
+// Access scheduler and functions from functions namespace
+const { onSchedule } = functions.scheduler;
+const { onRequest } = functions.https;
+const { onDocumentCreated } = functions.firestore;
+const { defineSecret } = functions.params;
+// Define secrets using Firebase Functions v2 approach
+const apifyToken = defineSecret('APIFY_TOKEN');
+const googleApiKey = defineSecret('MD_API_KEY');
+const serviceAccountJson = defineSecret('MD_SERVICE_ACCOUNT');
+const googleCseKey = defineSecret('GOOGLE_CSE_KEY');
+const googleCseCx = defineSecret('GOOGLE_CSE_CX');
+const geminiApiKey = defineSecret('GEMINI_API_KEY');
+const openrouterApiKey = defineSecret('OPENROUTER_API_KEY');
 // Pub/Sub topic names (can be overridden by env vars later if desired)
 const TOPIC_VIRAL_POST_CREATED = process.env.PUBSUB_TOPIC_VIRAL_POST_CREATED || 'viral-post-created';
 const TOPIC_ORCHESTRATION_COMPLETED = process.env.PUBSUB_TOPIC_ORCHESTRATION_COMPLETED || 'orchestration-completed';
-// Define secrets using Firebase Functions v2 approach
-const apifyToken = (0, params_1.defineSecret)('APIFY_TOKEN');
-const googleApiKey = (0, params_1.defineSecret)('MD_API_KEY');
-const serviceAccountJson = (0, params_1.defineSecret)('MD_SERVICE_ACCOUNT');
-const googleCseKey = (0, params_1.defineSecret)('GOOGLE_CSE_KEY');
-const googleCseCx = (0, params_1.defineSecret)('GOOGLE_CSE_CX');
-const geminiApiKey = (0, params_1.defineSecret)('GEMINI_API_KEY');
+// Logger is available from the main functions package
+const logger = functions.logger;
 // Competitor profiles to monitor (hardcoded as per requirements)
 const competitorProfiles = [
     '_thelookaesthetics',
@@ -80,14 +85,14 @@ const tiktokHashtags = [
  * Daily scheduled function to scrape competitor Instagram posts using Apify
  * Runs at 8:00 AM EST daily
  */
-exports.dailyViralScraper = (0, scheduler_1.onSchedule)({
+exports.dailyViralScraper = onSchedule({
     schedule: '0 8 * * *',
     timeZone: 'America/Toronto',
     memory: '1GiB',
     timeoutSeconds: 540,
     secrets: [apifyToken, googleApiKey]
 }, async (event) => {
-    v2_1.logger.info('Starting daily viral scraper job', { timestamp: new Date().toISOString() });
+    logger.info('Starting daily viral scraper job', { timestamp: new Date().toISOString() });
     try {
         // Initialize Apify client with secret token
         const apifyClient = new apify_client_1.ApifyClient({
@@ -95,7 +100,7 @@ exports.dailyViralScraper = (0, scheduler_1.onSchedule)({
         });
         const allPosts = [];
         for (const profile of competitorProfiles) {
-            v2_1.logger.info(`Scraping profile: ${profile}`);
+            logger.info(`Scraping profile: ${profile}`);
             try {
                 // Configure Apify Instagram Scraper run
                 const runInput = {
@@ -108,7 +113,7 @@ exports.dailyViralScraper = (0, scheduler_1.onSchedule)({
                 const run = await apifyClient.actor('apify/instagram-scraper').call(runInput);
                 // Get results
                 const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
-                v2_1.logger.info(`Successfully scraped ${items.length} posts from ${profile}`);
+                logger.info(`Successfully scraped ${items.length} posts from ${profile}`);
                 // Process and enhance each post
                 for (const item of items) {
                     const enhancedPost = {
@@ -135,7 +140,7 @@ exports.dailyViralScraper = (0, scheduler_1.onSchedule)({
                 }
             }
             catch (profileError) {
-                v2_1.logger.error(`Failed to scrape profile ${profile}:`, profileError);
+                logger.error(`Failed to scrape profile ${profile}:`, profileError);
                 continue; // Continue with next profile
             }
         }
@@ -148,10 +153,10 @@ exports.dailyViralScraper = (0, scheduler_1.onSchedule)({
             batch.set(docRef, post);
         });
         await batch.commit();
-        v2_1.logger.info(`Daily scraper completed successfully. Processed ${allPosts.length} posts total.`);
+        logger.info(`Daily scraper completed successfully. Processed ${allPosts.length} posts total.`);
     }
     catch (error) {
-        v2_1.logger.error('Daily viral scraper failed:', error);
+        logger.error('Daily viral scraper failed:', error);
         throw error;
     }
 });
@@ -159,14 +164,14 @@ exports.dailyViralScraper = (0, scheduler_1.onSchedule)({
  * Scheduled TikTok scraper leveraging Apify clockworks/tiktok-scraper actor.
  * Runs daily at 8:10 AM after Instagram scrape.
  */
-exports.dailyTiktokScraper = (0, scheduler_1.onSchedule)({
+exports.dailyTiktokScraper = onSchedule({
     schedule: '10 8 * * *',
     timeZone: 'America/Toronto',
     memory: '1GiB',
     timeoutSeconds: 540,
     secrets: [apifyToken]
 }, async () => {
-    v2_1.logger.info('Starting daily TikTok scraper job');
+    logger.info('Starting daily TikTok scraper job');
     try {
         const apifyClient = new apify_client_1.ApifyClient({ token: apifyToken.value() });
         const input = {
@@ -180,7 +185,7 @@ exports.dailyTiktokScraper = (0, scheduler_1.onSchedule)({
         };
         const run = await apifyClient.actor('clockworks/tiktok-scraper').call(input);
         const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems();
-        v2_1.logger.info(`TikTok scraper returned ${items.length} items`);
+        logger.info(`TikTok scraper returned ${items.length} items`);
         const batch = db.batch();
         const collectionRef = db.collection('viral_research');
         const dateKey = new Date().toISOString().split('T')[0];
@@ -213,10 +218,10 @@ exports.dailyTiktokScraper = (0, scheduler_1.onSchedule)({
             batch.set(docRef, post, { merge: true });
         });
         await batch.commit();
-        v2_1.logger.info('Daily TikTok scraper completed.');
+        logger.info('Daily TikTok scraper completed.');
     }
     catch (e) {
-        v2_1.logger.error('Daily TikTok scraper failed', e);
+        logger.error('Daily TikTok scraper failed', e);
         throw e;
     }
 });
@@ -224,17 +229,17 @@ exports.dailyTiktokScraper = (0, scheduler_1.onSchedule)({
  * Triggered when new viral research data is added to Firestore
  * Starts the agent analysis pipeline
  */
-exports.processViralPost = (0, firestore_1.onDocumentCreated)({
+exports.processViralPost = onDocumentCreated({
     document: 'viral_research/{docId}',
-    secrets: [googleApiKey, serviceAccountJson, geminiApiKey]
+    secrets: [googleApiKey, serviceAccountJson, openrouterApiKey]
 }, async (event) => {
     const snapshot = event.data;
     if (!snapshot) {
-        v2_1.logger.warn('No data associated with the event');
+        logger.warn('No data associated with the event');
         return;
     }
     const postData = snapshot.data();
-    v2_1.logger.info(`Processing new viral post: ${postData.postId}`, {
+    logger.info(`Processing new viral post: ${postData.postId}`, {
         profile: postData.profile,
         platform: postData.platform
     });
@@ -262,12 +267,12 @@ exports.processViralPost = (0, firestore_1.onDocumentCreated)({
                 } });
         }
         catch (e) {
-            v2_1.logger.error('Failed publishing viral-post-created event', e);
+            logger.error('Failed publishing viral-post-created event', e);
         }
-        v2_1.logger.info(`Analysis request created for post ${postData.postId}`);
+        logger.info(`Analysis request created for post ${postData.postId}`);
     }
     catch (error) {
-        v2_1.logger.error(`Failed to process viral post ${postData.postId}:`, error);
+        logger.error(`Failed to process viral post ${postData.postId}:`, error);
         throw error;
     }
 });
@@ -289,17 +294,17 @@ function calculateEngagementRate(likes, comments, followers) {
 /**
  * Health check endpoint for monitoring
  */
-exports.healthCheck = (0, scheduler_1.onSchedule)({
+exports.healthCheck = onSchedule({
     schedule: '*/5 * * * *', // Every 5 minutes
     timeZone: 'America/Toronto'
 }, async (event) => {
-    v2_1.logger.info('Health check - all systems operational');
+    logger.info('Health check - all systems operational');
 });
 /**
  * Unified orchestration scheduled job (after scraping) to run CSE augmentation and enrichment pipeline.
  * Runs daily at 8:30 AM EST (after dailyViralScraper 8:00 AM) to allow scrape completion.
  */
-exports.dailyUnifiedOrchestration = (0, scheduler_1.onSchedule)({
+exports.dailyUnifiedOrchestration = onSchedule({
     schedule: '30 8 * * *',
     timeZone: 'America/Toronto',
     memory: '512MiB',
@@ -307,14 +312,14 @@ exports.dailyUnifiedOrchestration = (0, scheduler_1.onSchedule)({
     secrets: [googleCseKey, googleCseCx]
 }, async () => {
     const { runOrchestration } = await Promise.resolve().then(() => __importStar(require('./AgentOrchestrator.js')));
-    v2_1.logger.info('Starting unified orchestration run');
+    logger.info('Starting unified orchestration run');
     // Fetch today's scraped posts to feed pipeline
     const dateKey = new Date().toISOString().split('T')[0];
     const snap = await db.collection('viral_research').where('scrapedAt', '>=', dateKey).limit(200).get();
     const posts = [];
     snap.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
     const result = await runOrchestration({ posts });
-    v2_1.logger.info('Unified orchestration completed', result);
+    logger.info('Unified orchestration completed', result);
     await db.collection('orchestration_runs').add({
         type: 'scheduled',
         startedAt: result.started,
@@ -338,13 +343,15 @@ exports.dailyUnifiedOrchestration = (0, scheduler_1.onSchedule)({
             } });
     }
     catch (e) {
-        v2_1.logger.error('Failed publishing orchestration-completed event', e);
+        logger.error('Failed publishing orchestration-completed event', e);
     }
 });
 /**
  * HTTP endpoint to trigger orchestration on-demand. Optional query param limit.
  */
-exports.runOrchestrationHttp = (0, https_1.onRequest)({ secrets: [googleCseKey, googleCseCx] }, async (req, res) => {
+exports.runOrchestrationHttp = onRequest({
+    secrets: [googleCseKey, googleCseCx]
+}, async (req, res) => {
     try {
         const { runOrchestration } = await Promise.resolve().then(() => __importStar(require('./AgentOrchestrator.js')));
         const limit = Math.min(parseInt(req.query.limit) || 50, 500);
@@ -374,12 +381,12 @@ exports.runOrchestrationHttp = (0, https_1.onRequest)({ secrets: [googleCseKey, 
                 } });
         }
         catch (e) {
-            v2_1.logger.error('Failed publishing orchestration-completed (http) event', e);
+            logger.error('Failed publishing orchestration-completed (http) event', e);
         }
         res.status(200).json(result);
     }
     catch (e) {
-        v2_1.logger.error('On-demand orchestration failed', e);
+        logger.error('On-demand orchestration failed', e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -390,7 +397,9 @@ exports.runOrchestrationHttp = (0, https_1.onRequest)({ secrets: [googleCseKey, 
  *   queryTerm (string) - optional ad-hoc strategic term to temporarily append to GOOGLE_CSE_TERMS for this run only (e.g. "BBL therapy today")
  *   disableCse=true|false - optionally bypass global CSE augmentation
  */
-exports.manualOrchestrate = (0, https_1.onRequest)({ secrets: [googleCseKey, googleCseCx] }, async (req, res) => {
+exports.manualOrchestrate = onRequest({
+    secrets: [googleCseKey, googleCseCx]
+}, async (req, res) => {
     try {
         const { runOrchestration } = await Promise.resolve().then(() => __importStar(require('./AgentOrchestrator.js')));
         const limit = Math.min(parseInt(req.query.limit) || 50, 500);
@@ -441,19 +450,19 @@ exports.manualOrchestrate = (0, https_1.onRequest)({ secrets: [googleCseKey, goo
                 } });
         }
         catch (e) {
-            v2_1.logger.error('Failed publishing orchestration-completed (manual) event', e);
+            logger.error('Failed publishing orchestration-completed (manual) event', e);
         }
         res.status(200).json(result);
     }
     catch (e) {
-        v2_1.logger.error('Manual orchestration failed', e);
+        logger.error('Manual orchestration failed', e);
         res.status(500).json({ error: e.message });
     }
 });
 /**
  * Scheduled Daily Digest at 12:00 PM America/Toronto
  */
-exports.dailyBrief = (0, scheduler_1.onSchedule)({
+exports.dailyBrief = onSchedule({
     schedule: '0 12 * * *',
     timeZone: 'America/Toronto',
     memory: '512MiB',
@@ -463,7 +472,7 @@ exports.dailyBrief = (0, scheduler_1.onSchedule)({
         await (0, sendDailyDigest_1.generateDailyDigest)();
     }
     catch (e) {
-        v2_1.logger.error('dailyBrief generation failed', e);
+        logger.error('dailyBrief generation failed', e);
         throw e;
     }
 });
@@ -471,7 +480,9 @@ exports.dailyBrief = (0, scheduler_1.onSchedule)({
  * Chat endpoint with persistent session memory & intent classification.
  * POST body: { sessionId?: string, message: string }
  */
-exports.chatCommand = (0, https_1.onRequest)({ secrets: [geminiApiKey] }, async (req, res) => {
+exports.chatCommand = onRequest({
+    secrets: [openrouterApiKey]
+}, async (req, res) => {
     if (req.method !== 'POST') {
         res.status(405).json({ error: 'POST only' });
         return;
@@ -487,10 +498,10 @@ exports.chatCommand = (0, https_1.onRequest)({ secrets: [geminiApiKey] }, async 
     // Classify intent
     let intentRaw = '';
     try {
-        intentRaw = await (0, aiFlows_1.classifyIntent)(message, geminiApiKey.value());
+        intentRaw = await (0, aiFlows_1.classifyIntent)(message, openrouterApiKey.value());
     }
     catch (e) {
-        v2_1.logger.error('Intent classification failed', e);
+        logger.error('Intent classification failed', e);
     }
     let intent = 'UNKNOWN';
     try {
@@ -508,17 +519,17 @@ exports.chatCommand = (0, https_1.onRequest)({ secrets: [geminiApiKey] }, async 
             orchestrationResult = await runOrchestration({ posts });
         }
         catch (e) {
-            v2_1.logger.error('Chat-triggered orchestration failed', e);
+            logger.error('Chat-triggered orchestration failed', e);
         }
     }
     // Summarize every 12 messages
     if (existing.messages.length % 12 === 0) {
         try {
-            const summary = await (0, aiFlows_1.summarizeConversation)(existing.messages.slice(-50), geminiApiKey.value());
+            const summary = await (0, aiFlows_1.summarizeConversation)(existing.messages.slice(-50), openrouterApiKey.value());
             existing.summaries.push({ summary, at: new Date().toISOString() });
         }
         catch (e) {
-            v2_1.logger.error('Conversation summarization failed', e);
+            logger.error('Conversation summarization failed', e);
         }
     }
     existing.messages.push({ role: 'system', content: `Intent: ${intent}`, at: new Date().toISOString() });
