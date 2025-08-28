@@ -2,12 +2,12 @@
  * Daily scheduled function to scrape competitor Instagram posts using Apify
  * Runs at 8:00 AM EST daily
  */
-export declare const dailyViralScraper: import("firebase-functions/scheduler").ScheduleFunction;
+export declare const dailyViralScraper: import("firebase-functions/v2/scheduler").ScheduleFunction;
 /**
  * Scheduled TikTok scraper leveraging Apify clockworks/tiktok-scraper actor.
  * Runs daily at 8:10 AM after Instagram scrape.
  */
-export declare const dailyTiktokScraper: import("firebase-functions/scheduler").ScheduleFunction;
+export declare const dailyTiktokScraper: import("firebase-functions/v2/scheduler").ScheduleFunction;
 /**
  * Triggered when new viral research data is added to Firestore
  * Starts the agent analysis pipeline
@@ -18,12 +18,12 @@ export declare const processViralPost: import("firebase-functions").CloudFunctio
 /**
  * Health check endpoint for monitoring
  */
-export declare const healthCheck: import("firebase-functions/scheduler").ScheduleFunction;
+export declare const healthCheck: import("firebase-functions/v2/scheduler").ScheduleFunction;
 /**
  * Unified orchestration scheduled job (after scraping) to run CSE augmentation and enrichment pipeline.
  * Runs daily at 8:30 AM EST (after dailyViralScraper 8:00 AM) to allow scrape completion.
  */
-export declare const dailyUnifiedOrchestration: import("firebase-functions/scheduler").ScheduleFunction;
+export declare const dailyUnifiedOrchestration: import("firebase-functions/v2/scheduler").ScheduleFunction;
 /**
  * HTTP endpoint to trigger orchestration on-demand. Optional query param limit.
  */
@@ -39,7 +39,7 @@ export declare const manualOrchestrate: import("firebase-functions/v2/https").Ht
 /**
  * Scheduled Daily Digest at 12:00 PM America/Toronto
  */
-export declare const dailyBrief: import("firebase-functions/scheduler").ScheduleFunction;
+export declare const dailyBrief: import("firebase-functions/v2/scheduler").ScheduleFunction;
 /**
  * Chat endpoint with persistent session memory & intent classification.
  * POST body: { sessionId?: string, message: string }

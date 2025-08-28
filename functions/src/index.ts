@@ -1,6 +1,6 @@
 // Clean TypeScript file for Firebase Functions v2
 
-import { onSchedule } from 'firebase-functions/scheduler';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';

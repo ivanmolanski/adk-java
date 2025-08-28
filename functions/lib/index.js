@@ -35,7 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.chatCommand = exports.dailyBrief = exports.manualOrchestrate = exports.runOrchestrationHttp = exports.dailyUnifiedOrchestration = exports.healthCheck = exports.processViralPost = exports.dailyTiktokScraper = exports.dailyViralScraper = void 0;
-const scheduler_1 = require("firebase-functions/scheduler");
+const scheduler_1 = require("firebase-functions/v2/scheduler");
 const firestore_1 = require("firebase-functions/v2/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
