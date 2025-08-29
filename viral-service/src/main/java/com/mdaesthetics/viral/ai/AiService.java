@@ -35,7 +35,7 @@ public class AiService {
   public AiService(GenAiProperties props, MeterRegistry meterRegistry) {
     this.props = props;
     if (props.apiKey() == null || props.apiKey().isBlank()) {
-      log.warn("GENAI_API_KEY / GOOGLE_API_KEY not provided at startup; LLM calls will fallback");
+      log.warn("OPENROUTER_API_KEY not provided at startup; LLM calls will fallback");
     }
   this.agent = LlmAgent.builder()
     .name("ai_chat")

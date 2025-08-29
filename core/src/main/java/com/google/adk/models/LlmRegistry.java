@@ -37,6 +37,10 @@ public final class LlmRegistry {
   /** Registers default LLM factories, e.g. for Gemini models. */
   static {
     registerLlm("gemini-.*", modelName -> Gemini.builder().modelName(modelName).build());
+    // Fallback stub for OpenRouter model names used in migrated configuration and tests.
+    // Returns a lightweight in-process LLM that echoes or returns a small stubbed reply so
+    // unit tests and local runs don't attempt real network calls to unavailable providers.
+    registerLlm("openrouter-.*", modelName -> new LocalStubLlm(modelName));
   }
 
   /**

@@ -1,17 +1,22 @@
 package com.mdaesthetics.viral;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import com.google.genai.*;
-import com.google.genai.types.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.mdaesthetics.viral.openrouter.OpenRouterAdapter;
 
 @Service
 public class ViralEnrichmentAgent {
 
-    private final Client genaiClient;
+    private static final Logger log = LoggerFactory.getLogger(ViralEnrichmentAgent.class);
 
-    public ViralEnrichmentAgent() {
-        // The Client constructor will automatically pick up GOOGLE_API_KEY from environment
-        this.genaiClient = new Client();
+    private final OpenRouterAdapter openRouterAdapter;
+
+    @Autowired
+    public ViralEnrichmentAgent(OpenRouterAdapter openRouterAdapter) {
+        this.openRouterAdapter = openRouterAdapter;
+        log.info("ViralEnrichmentAgent initialized (OpenRouter adapter will be used if OPENROUTER_API_KEY is configured)");
     }
 
     public ViralEnrichmentResult enrichVideo(String videoUrl, String platform, String hashtags, String description) {
@@ -21,13 +26,23 @@ public class ViralEnrichmentAgent {
             platform, videoUrl, hashtags, description
         );
 
-        // Use configured model (migrated to OpenRouter model naming)
-        GenerateContentResponse response = genaiClient.models.generateContent(
-            "openrouter-glm-4.5-air",
-            prompt,
-            null
-        );
+        String key = System.getenv("OPENROUTER_API_KEY");
+        if (key == null || key.isBlank()) {
+            log.warn("OPENROUTER_API_KEY not provided; LLM enrichment will fallback to stub");
+            return new ViralEnrichmentResult("(stub) enrichment unavailable - no LLM key configured.");
+        }
 
-        return new ViralEnrichmentResult(response.text());
+        try {
+            String resp = openRouterAdapter.generateText("openrouter-glm-4.5-air", prompt);
+            if (resp != null && !resp.isBlank()) {
+                // Trim and return the first meaningful chunk
+                String out = resp.trim();
+                if (out.length() > 0) return new ViralEnrichmentResult(out);
+            }
+        } catch (Exception e) {
+            log.error("Error calling OpenRouter for enrichment, falling back to stub", e);
+        }
+
+        return new ViralEnrichmentResult("(stub) enrichment failed or returned empty");
     }
 }

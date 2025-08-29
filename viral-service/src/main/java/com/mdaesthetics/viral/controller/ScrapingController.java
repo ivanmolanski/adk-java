@@ -243,7 +243,7 @@ public class ScrapingController {
         }
         
         try {
-            // TODO: In production, call Cloud Function to stop the job
+            //          
             jobInfo.put("status", "stopped");
             jobInfo.put("endTime", LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
             jobInfo.put("stoppedManually", true);

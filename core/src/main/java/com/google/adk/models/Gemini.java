@@ -37,6 +37,14 @@ import com.google.genai.types.HttpOptions;
 import com.google.genai.types.LiveConnectConfig;
 import com.google.genai.types.Part;
 import io.reactivex.rxjava3.core.Flowable;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -297,6 +305,30 @@ public class Gemini extends BaseLlm {
     GenerateContentConfig config = llmRequest.config().orElse(null);
     String effectiveModelName = llmRequest.model().orElse(model());
 
+    // If OPENROUTER_API_KEY is configured, prefer OpenRouter HTTP endpoint instead of
+    // using the google.genai Client. This allows migrating away from the GenAI client.
+    String openrouterKey = System.getenv("OPENROUTER_API_KEY");
+    if (openrouterKey != null && !openrouterKey.isBlank()) {
+      // Build a simple prompt from finalContents by concatenating text parts
+      StringBuilder promptBuilder = new StringBuilder();
+      for (Content c : finalContents) {
+        c.parts().ifPresent(parts -> parts.forEach(p -> p.text().ifPresent(promptBuilder::append)));
+      }
+      String prompt = promptBuilder.toString();
+
+      try {
+        String text = callOpenRouterSync(effectiveModelName, prompt, openrouterKey);
+        Candidate candidate = Candidate.builder()
+            .content(Content.builder().role("model").parts(ImmutableList.of(Part.builder().text(text).build())).build())
+            .build();
+        GenerateContentResponse resp = GenerateContentResponse.builder().candidates(ImmutableList.of(candidate)).build();
+        return Flowable.just(LlmResponse.create(resp));
+      } catch (Exception e) {
+        logger.warn("OpenRouter fallback failed, falling back to native client", e);
+        // continue to original path
+      }
+    }
+
     logger.trace("Request Contents: {}", finalContents);
     logger.trace("Request Config: {}", config);
 
@@ -398,6 +430,71 @@ public class Gemini extends BaseLlm {
               .generateContent(effectiveModelName, finalContents, config)
               .thenApplyAsync(LlmResponse::create));
     }
+  }
+
+  // Simple synchronous OpenRouter call to retrieve text output. Best-effort extraction.
+  private String callOpenRouterSync(String model, String prompt, String apiKey) throws Exception {
+    ObjectMapper mapper = new ObjectMapper();
+    String endpoint = "https://api.openrouter.ai/v1/outputs";
+    Map<String,Object> body = Map.of("model", model, "input", prompt);
+    byte[] payload = mapper.writeValueAsBytes(body);
+
+    URL url = new URL(endpoint);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setRequestMethod("POST");
+    conn.setDoOutput(true);
+    conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+    conn.setRequestProperty("Authorization", "Bearer " + apiKey);
+    conn.setConnectTimeout(15000);
+    conn.setReadTimeout(30000);
+
+    try (OutputStream os = conn.getOutputStream()) {
+      os.write(payload);
+      os.flush();
+    }
+
+    int code = conn.getResponseCode();
+    InputStream is = code >= 200 && code < 300 ? conn.getInputStream() : conn.getErrorStream();
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    byte[] buf = new byte[4096];
+    int r;
+    while ((r = is.read(buf)) != -1) baos.write(buf, 0, r);
+    String respText = baos.toString(StandardCharsets.UTF_8);
+
+    if (code < 200 || code >= 300) {
+      throw new RuntimeException("OpenRouter API error: " + code + " " + respText);
+    }
+
+    try {
+      Map<String,Object> resp = mapper.readValue(respText, Map.class);
+      if (resp.containsKey("output")) {
+        Object out = resp.get("output");
+        if (out instanceof String) return (String) out;
+        if (out instanceof Map) {
+          Object content = ((Map) out).get("content");
+          if (content instanceof String) return (String) content;
+        }
+      }
+      if (resp.containsKey("results")) {
+        Object results = resp.get("results");
+        if (results instanceof Iterable) {
+          for (Object r0 : (Iterable<?>) results) {
+            if (r0 instanceof Map) {
+              Object out = ((Map) r0).get("output");
+              if (out instanceof String) return (String) out;
+              if (out instanceof Map) {
+                Object content = ((Map) out).get("content");
+                if (content instanceof String) return (String) content;
+              }
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      // ignore parse error and return raw response
+    }
+
+    return respText;
   }
 
   /**

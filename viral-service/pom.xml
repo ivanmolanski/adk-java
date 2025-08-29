@@ -113,12 +113,7 @@
             <version>v1-rev20240520-2.0.0</version>
         </dependency>
 
-        <!-- Google GenAI -->
-        <dependency>
-            <groupId>com.google.genai</groupId>
-            <artifactId>google-genai</artifactId>
-            <version>1.12.0</version>
-        </dependency>
+        <!-- Google GenAI client removed: using OpenRouterAdapter HTTP client instead -->
 
         <!-- Jackson for JSON processing -->
         <dependency>
@@ -198,6 +193,20 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring-boot.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Ensure json-smart version compatible with json-path used in tests -->
+        <dependency>
+            <groupId>net.minidev</groupId>
+            <artifactId>json-smart</artifactId>
+            <version>2.5.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Provide ASM helper classes required by json-smart at test time -->
+        <dependency>
+            <groupId>net.minidev</groupId>
+            <artifactId>asm</artifactId>
+            <version>1.0.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
