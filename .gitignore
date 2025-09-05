@@ -2,6 +2,17 @@ target/
 .idea
 node_modules
 
+# Python virtual environment and bytecode
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
 # Security - Never commit sensitive files (but keep locally for development)
 # service-account.json - commented out for local development
 
@@ -28,3 +39,15 @@ Thumbs.db
 
 # Large chat logs
 chat.json
+
+# Application logs
+*.log
+backend.log
+viral-service.log
+app.log
+service.log
+
+# Temporary files
+temp/
+tmp/
+uploads/
