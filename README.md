@@ -1,53 +1,208 @@
-# Agent Development Kit (ADK) for Java
+# MD Aesthetics Viral Content System
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![r/agentdevelopmentkit](https://img.shields.io/badge/Reddit-r%2Fagentdevelopmentkit-FF4500?style=flat&logo=reddit&logoColor=white)](https://www.reddit.com/r/agentdevelopmentkit/)
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.116-green.svg)](https://fastapi.tiangolo.com)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black.svg)](https://nextjs.org)
 
 <html>
     <h2 align="center">
       <img src="https://raw.githubusercontent.com/google/adk-python/main/assets/agent-development-kit.png" width="256"/>
     </h2>
     <h3 align="center">
-      An open-source, code-first Java toolkit for building, evaluating, and deploying sophisticated AI agents with flexibility and control.
-    </h3>
-    <h3 align="center">
-      Important Links:
-      <a href="https://google.github.io/adk-docs/">Docs</a> &
-      <a href="https://github.com/google/adk-samples">Samples</a> &
-      <a href="https://github.com/google/adk-python">Python ADK</a>.
+      An intelligent competitive analysis and content generation system for MD Aesthetics, powered by Python/FastAPI backend with Pydantic-based AI agents.
     </h3>
 </html>
 
-Agent Development Kit (ADK) is designed for developers seeking fine-grained
-control and flexibility when building advanced AI agents that are tightly
-integrated with services in Google Cloud. It allows you to define agent
-behavior, orchestration, and tool use directly in code, enabling robust
-debugging, versioning, and deployment anywhere – from your laptop to the cloud.
+The MD Aesthetics Viral Content System is a comprehensive solution for monitoring competitor social media content, analyzing viral trends, and generating compliant, on-brand content for MD Aesthetics' social media channels.
 
 --------------------------------------------------------------------------------
 
 ## ✨ Key Features
 
--   **Rich Tool Ecosystem**: Utilize pre-built tools, custom functions, OpenAPI
-    specs, or integrate existing tools to give agents diverse capabilities, all
-    for tight integration with the Google ecosystem.
+-   **🔍 Competitive Intelligence**: Automated monitoring of competitor Instagram and TikTok accounts with engagement analysis
+-   **🤖 AI-Powered Agents**: Pydantic-based agents for trend analysis, content creation, and compliance checking
+-   **📊 Trend Analysis**: Identifies viral hooks, CTAs, content categories, and engagement drivers
+-   **✍️ Content Generation**: Creates MD Aesthetics-branded content with automatic compliance checking
+-   **📧 Automated Reporting**: Daily digest emails with trending content and generated drafts
+-   **🌐 Modern Architecture**: Python/FastAPI backend with PostgreSQL/Supabase database
 
--   **Code-First Development**: Define agent logic, tools, and orchestration
-    directly in Java for ultimate flexibility, testability, and versioning.
+## 🏗️ Architecture
 
--   **Modular Multi-Agent Systems**: Design scalable applications by composing
-    multiple specialized agents into flexible hierarchies.
+### Backend (Python/FastAPI)
+- **FastAPI**: High-performance async web framework
+- **Pydantic**: Data validation and agent state management  
+- **PostgreSQL/Supabase**: Production-ready database
+- **SQLAlchemy**: Async ORM for database operations
 
-## 🔒 Security & Setup
+### AI Agents
+- **TrendAnalyzer**: Analyzes viral posts for hooks, CTAs, and engagement factors
+- **ContentCreator**: Generates MD Aesthetics-branded content with compliance
+- **ComplianceAgent**: Validates content against brand guidelines and regulations
+- **EmailDispatcher**: Sends automated HTML digest emails
 
-**Important:** This project requires API credentials that must be kept secure.
+### Frontend (Next.js)
+- **Next.js 14**: React framework with TypeScript
+- **Tailwind CSS**: Utility-first styling
+- **Real-time Dashboard**: Live competitor monitoring and content generation
 
-### Quick Start
-1. Copy environment template: `cp .env.example .env`
-2. Fill in your API credentials in `.env` (never commit this file!)
-3. For production, use Google Cloud Secret Manager
+## 🚀 Quick Start
 
-📖 **See [SECURITY.md](SECURITY.md) for complete setup instructions**
+### Prerequisites
+- Python 3.12+
+- Node.js 18+
+- PostgreSQL database (or Supabase account)
+
+### 1. Setup Development Environment
+```bash
+# Clone the repository
+git clone https://github.com/ivanmolanski/adk-java.git
+cd adk-java
+
+# Setup Python backend
+./setup-dev.sh
+
+# Edit environment variables
+cp .env.example .env
+# Edit .env with your API keys and database credentials
+```
+
+### 2. Configure Environment Variables
+Required environment variables in `.env`:
+
+```bash
+# Database (PostgreSQL/Supabase)
+DATABASE_URL=postgresql://user:password@localhost:5432/mdaesthetics_db
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# AI/LLM APIs
+OPENROUTER_API_KEY=your-openrouter-api-key
+OPENAI_API_KEY=your-openai-api-key
+
+# Social Media APIs
+APIFY_TOKEN=your-apify-token
+GOOGLE_CSE_KEY=your-google-cse-key
+GOOGLE_CSE_CX=your-search-engine-id
+
+# Email Configuration
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+DAILY_DIGEST_RECIPIENTS=team@mdaesthetics.ca
+```
+
+### 3. Start the Application
+```bash
+# Terminal 1: Start Python backend
+./start-backend.sh
+
+# Terminal 2: Start Next.js frontend  
+./start-frontend.sh
+```
+
+### 4. Access the Application
+- **Backend API**: http://localhost:3453
+- **API Documentation**: http://localhost:3453/docs
+- **Frontend Dashboard**: http://localhost:3000
+
+## 📚 API Endpoints
+
+### Health & Status
+```
+GET  /api/v1/health                    # System health check
+```
+
+### Viral Content Analysis
+```
+GET  /api/v1/viral/posts               # Get competitor posts
+POST /api/v1/viral/analyze             # Analyze posts for trends
+POST /api/v1/viral/generate            # Generate MD Aesthetics content
+POST /api/v1/viral/analyze-and-generate # Complete pipeline
+```
+
+### Agent Management
+```
+GET  /api/v1/agents/                   # List available agents
+GET  /api/v1/agents/{agent_type}       # Get agent details
+POST /api/v1/agents/pipeline/*         # Execute agent workflows
+POST /api/v1/agents/{agent_type}/execute # Execute specific agent
+```
+
+## 🤖 Pydantic Agents
+
+### TrendAnalyzer
+Analyzes viral social media posts to extract:
+- **Hooks**: Opening 3-second attention grabbers
+- **CTAs**: Call-to-action patterns and effectiveness
+- **Categories**: Content type classification (Process Demystified, Science Explained, etc.)
+- **Scores**: Relevance and virality scoring for MD Aesthetics
+
+### ContentCreator  
+Generates MD Aesthetics-branded content with:
+- **Brand Compliance**: Automatic checking against forbidden terms (e.g., "Botox" → "Tox")
+- **Service Focus**: Content tailored to specific treatments (Duo-C-Lift, SkinTyte, etc.)
+- **Platform Optimization**: Instagram/TikTok specific formatting
+- **Educational Value**: Clinical authority and trustworthy information
+
+### ComplianceAgent
+Validates content for:
+- **Brand Guidelines**: Tone, voice, and messaging consistency
+- **Medical Regulations**: Compliance with aesthetic medicine advertising rules
+- **Forbidden Terms**: Automatic detection and replacement
+- **Quality Assurance**: Professional standards verification
+
+## 🎯 Competitor Monitoring
+
+The system automatically monitors these competitor profiles:
+- `_thelookaesthetics` (Instagram)
+- `subtle.enhancements` (Instagram)  
+- `skinvitalityofficial` (Instagram/TikTok)
+
+### Content Categories Analyzed
+1. **Process Demystified**: Treatment demonstrations and procedures
+2. **Science Explained**: Educational content about technologies and ingredients
+3. **Transformation**: Before/after results and success stories
+4. **Expert Myth-Busting**: Professional authority and trust-building content
+
+## 📧 Automated Reporting
+
+Daily digest emails include:
+- Top 5 viral posts from competitors
+- Trend analysis and engagement insights
+- Generated MD Aesthetics content drafts
+- Compliance-checked captions and hashtags
+- Posting recommendations and timing tips
+
+## 🛠️ Development
+
+### Project Structure
+```
+├── backend/                 # Python FastAPI backend
+│   ├── main.py             # FastAPI application entry point
+│   └── app/
+│       ├── api/            # API route handlers
+│       ├── agents/         # Pydantic-based AI agents
+│       └── models/         # Database and data models
+├── app/                    # Next.js frontend
+│   ├── components/         # React components
+│   ├── hooks/              # Custom React hooks
+│   └── lib/                # Utility functions
+├── src/google/adk/         # Python ADK framework (legacy)
+├── requirements.txt        # Python dependencies
+└── package.json           # Node.js dependencies
+```
+
+### Adding New Agents
+1. Create agent class in `backend/app/agents/`
+2. Inherit from Pydantic `BaseModel`
+3. Define agent methods and validation
+4. Add to agent registry in `app/api/agents.py`
+
+### Database Schema
+- **competitor_posts**: Scraped social media content
+- **trend_analyses**: Agent analysis results  
+- **content_drafts**: Generated MD Aesthetics content
+- **agent_runs**: Execution logs and metrics
 
 ## 🚀 Installation
 

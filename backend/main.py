@@ -19,9 +19,13 @@ from typing import Dict, Any
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Import route modules
-from app.api.viral import router as viral_router
-from app.api.agents import router as agents_router
+# Import route modules (will be imported later to avoid circular imports)
+import importlib.util
+import sys
+import os
+
+# Add the current directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
@@ -55,9 +59,15 @@ def create_app() -> FastAPI:
             "database": "PostgreSQL/Supabase"
         }
 
-    # Include API routers
-    app.include_router(viral_router, prefix="/api/v1/viral", tags=["viral"])
-    app.include_router(agents_router, prefix="/api/v1/agents", tags=["agents"])
+    # Import and include API routers  
+    try:
+        from app.api.viral import router as viral_router
+        from app.api.agents import router as agents_router
+        
+        app.include_router(viral_router, prefix="/api/v1/viral", tags=["viral"])
+        app.include_router(agents_router, prefix="/api/v1/agents", tags=["agents"])
+    except ImportError as e:
+        logger.warning(f"Could not import API routers: {e}. Running with basic endpoints only.")
 
     return app
 
