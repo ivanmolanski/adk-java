@@ -5,6 +5,13 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import (
+    NoSuchElementException, 
+    WebDriverException, 
+    TimeoutException,
+    ElementNotInteractableException,
+    StaleElementReferenceException
+)
 from bs4 import BeautifulSoup
 import logging
 import time
@@ -109,7 +116,8 @@ class ViralScraper:
                 close_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Not Now') or contains(@aria-label, 'Close')]")
                 close_button.click()
                 await asyncio.sleep(1)
-            except:
+            except (NoSuchElementException, ElementNotInteractableException, TimeoutException):
+                # No popup found or couldn't interact with it - this is expected behavior
                 pass
             
             # Scroll to load more posts
@@ -168,9 +176,10 @@ class ViralScraper:
                         caption_element = driver.find_element(By.XPATH, selector)
                         caption = caption_element.text
                         break
-                    except:
+                    except (NoSuchElementException, StaleElementReferenceException):
                         continue
-            except:
+            except WebDriverException as e:
+                logger.warning(f"Error extracting caption: {str(e)}")
                 pass
             
             # Extract hashtags from caption
@@ -191,7 +200,8 @@ class ViralScraper:
                         if numbers:
                             likes = int(numbers[0].replace(',', ''))
                         break
-            except:
+            except (NoSuchElementException, StaleElementReferenceException, ValueError) as e:
+                logger.debug(f"Could not extract like count: {str(e)}")
                 pass
             
             try:
@@ -204,7 +214,8 @@ class ViralScraper:
                         if numbers:
                             comments = int(numbers[0].replace(',', ''))
                         break
-            except:
+            except (NoSuchElementException, StaleElementReferenceException, ValueError) as e:
+                logger.debug(f"Could not extract comment count: {str(e)}")
                 pass
             
             # Close the tab and switch back
