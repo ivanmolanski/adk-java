@@ -1,129 +1,254 @@
-# Agent Development Kit (ADK) for Java
+# MD Aesthetics Viral Forge
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![r/agentdevelopmentkit](https://img.shields.io/badge/Reddit-r%2Fagentdevelopmentkit-FF4500?style=flat&logo=reddit&logoColor=white)](https://www.reddit.com/r/agentdevelopmentkit/)
+**A complete AI-powered viral content analysis and generation system for MD Aesthetics, built with Python FastAPI backend and Next.js frontend.**
 
-<html>
-    <h2 align="center">
-      <img src="https://raw.githubusercontent.com/google/adk-python/main/assets/agent-development-kit.png" width="256"/>
-    </h2>
-    <h3 align="center">
-      An open-source, code-first Java toolkit for building, evaluating, and deploying sophisticated AI agents with flexibility and control.
-    </h3>
-    <h3 align="center">
-      Important Links:
-      <a href="https://google.github.io/adk-docs/">Docs</a> &
-      <a href="https://github.com/google/adk-samples">Samples</a> &
-      <a href="https://github.com/google/adk-python">Python ADK</a>.
-    </h3>
-</html>
+## 🌟 Overview
 
-Agent Development Kit (ADK) is designed for developers seeking fine-grained
-control and flexibility when building advanced AI agents that are tightly
-integrated with services in Google Cloud. It allows you to define agent
-behavior, orchestration, and tool use directly in code, enabling robust
-debugging, versioning, and deployment anywhere – from your laptop to the cloud.
+MD Aesthetics Viral Forge is an advanced multi-agent system that monitors viral social media content in the medical aesthetics industry and generates superior, compliant content for MD Aesthetics. The system has been completely migrated from Google ADK/Firebase to a modern Python-based stack.
 
---------------------------------------------------------------------------------
+## 🏗️ Architecture
 
-## ✨ Key Features
+### Backend (Python FastAPI)
+- **FastAPI** - Modern, fast web framework
+- **Pydantic** - Data validation and agent state management
+- **PostgreSQL** - Primary database (Supabase)
+- **Multi-Agent System** - Specialized AI agents for different tasks
 
--   **Rich Tool Ecosystem**: Utilize pre-built tools, custom functions, OpenAPI
-    specs, or integrate existing tools to give agents diverse capabilities, all
-    for tight integration with the Google ecosystem.
+### Frontend (Next.js)
+- **Next.js 14** - React framework with modern features
+- **TypeScript** - Type safety and better DX
+- **Tailwind CSS** - Utility-first styling
+- **Radix UI** - Accessible component library
 
--   **Code-First Development**: Define agent logic, tools, and orchestration
-    directly in Java for ultimate flexibility, testability, and versioning.
+### AI Agents
+1. **TrendAnalyzer** - Analyzes viral posts for hooks, CTAs, and relevance
+2. **ContentCreator** - Generates MD Aesthetics-branded content
+3. **ComplianceAgent** - Ensures content meets guidelines and regulations
+4. **EmailDispatcher** - Sends automated digest emails
 
--   **Modular Multi-Agent Systems**: Design scalable applications by composing
-    multiple specialized agents into flexible hierarchies.
+## 🚀 Quick Start
 
-## 🚀 Installation
+### Prerequisites
+- Python 3.8+ 
+- Node.js 16+
+- PostgreSQL database (Supabase configured)
 
-If you're using Maven, add the following to your dependencies:
+### Setup Development Environment
+```bash
+# Clone and setup
+./setup-dev.sh
 
-<!-- {x-version-start:google-adk:released} -->
+# Start backend (Terminal 1)
+./start-backend.sh
 
-```xml
-<dependency>
-  <groupId>com.google.adk</groupId>
-  <artifactId>google-adk</artifactId>
-  <version>0.2.0</version>
-</dependency>
-<!-- Dev UI -->
-<dependency>
-    <groupId>com.google.adk</groupId>
-    <artifactId>google-adk-dev</artifactId>
-    <version>0.2.0</version>
-</dependency>
+# Start frontend (Terminal 2) 
+./start-frontend.sh
 ```
 
-<!-- {x-version-end} -->
+### Access Points
+- **Frontend Dashboard**: http://localhost:3000
+- **API Documentation**: http://localhost:3453/docs
+- **API Base URL**: http://localhost:3453/api/v1
 
-To instead use an unreleased version, you could use <https://jitpack.io/#google/adk-java/>;
-see <https://github.com/enola-dev/LearningADK#jitpack> for an example illustrating this.
+## 📊 Features
 
-## 📚 Documentation
+### Viral Content Analysis
+- Monitors competitor Instagram and TikTok accounts
+- Calculates engagement velocity scores and virality metrics
+- Categorizes content into strategic buckets:
+  - Process Demystified
+  - Science Explained  
+  - Transformation Stories
+  - Myth Busting
 
-For building, evaluating, and deploying agents by follow the Java
-documentation & samples:
+### Content Generation
+- Creates MD Aesthetics-branded social media posts
+- Focuses on key services: Duo-C-Lift, SkinTyte, Radiesse, Vivier
+- Maintains professional, educational tone
+- Ensures compliance (e.g., "Tox" instead of "Botox")
 
-*   **[Documentation](https://google.github.io/adk-docs)**
-*   **[Samples](https://github.com/google/adk-samples)**
+### Compliance & Quality
+- Validates content against MD Aesthetics guidelines
+- Checks for forbidden words and required elements
+- Calculates brand voice alignment scores
+- Auto-fixes common compliance issues
 
-## 🏁 Feature Highlight
+### Automation
+- Daily automated competitor monitoring
+- Scheduled email digests to team
+- Real-time content analysis and generation
+- PostgreSQL data persistence
 
-### Same Features & Familiar Interface As Python ADK:
+## 🤖 API Endpoints
 
-```java
-import com.google.adk.agents.LlmAgent;
-import com.google.adk.tools.GoogleSearchTool;
+### Health & Status
+- `GET /api/v1/health` - System health check
+- `GET /api/v1/status` - Detailed system status
 
-LlmAgent rootAgent = LlmAgent.builder()
-    .name("search_assistant")
-    .description("An assistant that can search the web.")
-    .model("gemini-2.5-flash") // Or your preferred models
-    .instruction("You are a helpful assistant. Answer user questions using Google Search when needed.")
-    .tools(new GoogleSearchTool())
-    .build();
+### Viral Content
+- `GET /api/v1/viral/posts` - Get competitor posts
+- `POST /api/v1/viral/analyze` - Analyze viral trends
+- `POST /api/v1/viral/generate` - Generate content
+- `POST /api/v1/viral/analyze-and-generate` - Complete pipeline
+- `GET /api/v1/viral/insights` - Analytics and insights
+
+### Agent Management
+- `GET /api/v1/agents/` - List available agents
+- `POST /api/v1/agents/trend-analyzer` - Run trend analysis
+- `POST /api/v1/agents/content-creator` - Generate content
+- `POST /api/v1/agents/compliance` - Check compliance
+- `POST /api/v1/agents/pipeline/analyze-create-check` - Full pipeline
+
+## 🔧 Configuration
+
+### Environment Variables
+Required environment variables in `.env`:
+
+```bash
+# Application
+ENVIRONMENT=development
+DEBUG=true
+SERVER_PORT=3453
+
+# Database (Supabase PostgreSQL)
+POSTGRES_USER="postgres"
+POSTGRES_PASSWORD="your-password"
+POSTGRES_DATABASE="postgres"
+POSTGRES_HOST="your-supabase-host"
+POSTGRES_PORT=6543
+
+# APIs
+OPENROUTER_API_KEY=your-openrouter-key
+APIFY_TOKEN=your-apify-token
+GOOGLE_CSE_KEY=your-google-cse-key
+GOOGLE_CSE_CX=your-google-cse-cx
+
+# Email
+EMAIL_ENABLED=true
+DIGEST_RECIPIENTS=christine.carrer@hotmail.com,dalkeith@golden.net
+EMAIL_SENDER=noreply@mdaesthetics.ca
+
+# Frontend URLs
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3453/api/v1
 ```
 
-### Development UI
+## 🧪 Testing
 
-Same as the beloved Python Development UI.
-A built-in development UI to help you test, evaluate, debug, and showcase your agent(s).
-<img src="https://raw.githubusercontent.com/google/adk-python/main/assets/adk-web-dev-ui-function-call.png"/>
+### Test Backend Agents
+```bash
+source venv/bin/activate
 
-### Evaluate Agents
+# Test TrendAnalyzer
+python3 -c "
+import asyncio
+from app.agents.trend_analyzer import TrendAnalyzerAgent
+from app.models.schemas import TrendAnalysisRequest, CompetitorPostCreate, Platform
 
-Coming soon...
+async def test():
+    agent = TrendAnalyzerAgent()
+    post = CompetitorPostCreate(
+        platform=Platform.INSTAGRAM,
+        profile_url='https://instagram.com/test',
+        post_url='https://instagram.com/p/test123',
+        caption='Transform your skin! #skincare #aesthetics',
+        hashtags=['#skincare', '#aesthetics'],
+        likes=150, comments=25, shares=5, views=800
+    )
+    result = await agent.execute(TrendAnalysisRequest(post_data=post))
+    print(f'Success: {result[\"success\"]}')
+    print(f'Virality Score: {result[\"data\"][\"virality_score\"]}')
 
-## 🤖 A2A and ADK integration
+asyncio.run(test())
+"
+```
 
-For remote agent-to-agent communication, ADK integrates with the
-[A2A protocol](https://github.com/google/A2A/).
-Examples coming soon...
+### Test API Endpoints
+```bash
+# Health check
+curl http://localhost:3453/api/v1/health
 
-## 🤝 Contributing
+# List agents
+curl http://localhost:3453/api/v1/agents/
+```
 
-We welcome contributions from the community! Whether it's bug reports, feature
-requests, documentation improvements, or code contributions, please see our
-[**Contributing Guidelines**](./CONTRIBUTING.md) to get started.
+## 📱 Frontend Components
 
-## 📄 License
+### Dashboard
+- Real-time viral content insights
+- Generated content queue
+- Performance metrics
+- Quick actions
 
-This project is licensed under the Apache 2.0 License - see the
-[LICENSE](LICENSE) file for details.
+### Research Center  
+- Competitor post analysis
+- Trend identification
+- Content categorization
+- Export capabilities
 
-## Preview
+### Command Center
+- Manual content generation
+- Agent pipeline controls
+- Batch operations
+- System monitoring
 
-This feature is subject to the "Pre-GA Offerings Terms" in the General Service
-Terms section of the
-[Service Specific Terms](https://cloud.google.com/terms/service-terms#1). Pre-GA
-features are available "as is" and might have limited support. For more
-information, see the
-[launch stage descriptions](https://cloud.google.com/products?hl=en#product-launch-stages).
+### Studio
+- Content review and approval
+- Compliance checking
+- Publishing workflows
+- Analytics tracking
 
---------------------------------------------------------------------------------
+## 🔄 Migration from Google ADK
 
-*Happy Agent Building!*
+This system has been completely migrated from the original Google ADK/Firebase implementation:
+
+### ✅ Completed
+- ✅ Removed all Google Cloud/Firebase dependencies
+- ✅ Migrated from Java Spring Boot to Python FastAPI
+- ✅ Replaced Google ADK agents with Pydantic-based agents  
+- ✅ Switched from Firestore to PostgreSQL (Supabase)
+- ✅ Updated frontend API integration
+- ✅ Maintained all core functionality
+- ✅ Enhanced type safety with Pydantic validation
+
+### 🏗️ Architecture Changes
+- **Before**: Java ADK + Google Cloud + Firebase
+- **After**: Python FastAPI + Pydantic + PostgreSQL + Supabase
+
+## 🛠️ Development
+
+### Project Structure
+```
+├── app/                     # Python backend
+│   ├── agents/             # AI agents (Pydantic-based)
+│   ├── api/                # FastAPI routes
+│   ├── core/               # Configuration and database
+│   ├── models/             # Pydantic schemas
+│   └── services/           # Business logic
+├── app/                    # Next.js frontend
+│   ├── components/         # React components
+│   ├── hooks/              # Custom hooks
+│   └── pages/              # Page components
+├── requirements.txt        # Python dependencies
+├── package.json           # Node.js dependencies
+└── main.py                # FastAPI application entry
+```
+
+### Key Technologies
+- **FastAPI** - High-performance Python web framework
+- **Pydantic** - Data validation and settings management
+- **SQLAlchemy** - Database ORM with async support
+- **PostgreSQL** - Robust relational database
+- **Next.js** - React framework with TypeScript
+- **Tailwind CSS** - Utility-first CSS framework
+
+## 📝 License
+
+Copyright 2025 MD Aesthetics. All rights reserved.
+
+## 🤝 Support
+
+For technical support or questions about the Viral Forge system, contact the development team.
+
+---
+
+**Built with ❤️ for MD Aesthetics - Transforming viral intelligence into business results.**
