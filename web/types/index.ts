@@ -61,7 +61,7 @@ export interface TrendAnalysis {
 }
 
 export interface ContentDraft {
-  id?: string;
+  id: string;
   trendAnalysisId: string;
   platform: string; // "instagram" | "tiktok"
   caption: string;

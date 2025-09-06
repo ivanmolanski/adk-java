@@ -1,0 +1,33 @@
+INFO:__main__:Attempting to import routers...
+INFO:__main__:Routers imported and registered successfully
+INFO:__main__:Starting MD Aesthetics Viral Content API on 0.0.0.0:3453
+INFO:main:Attempting to import routers...
+INFO:main:Routers imported and registered successfully
+INFO:     Started server process [83347]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:3453 (Press CTRL+C to quit)
+INFO:     127.0.0.1:39924 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching trends - category: None, limit: 10
+INFO:     127.0.0.1:39940 - "GET /viral-service/api/v1/viral/trends HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching drafts - category: None, limit: 5, platform: None
+INFO:     127.0.0.1:54386 - "GET /viral-service/api/v1/viral/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43472 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56752 - "GET /viral-service/api/v1/viral/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43480 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:36834 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:36838 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:37112 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:app.api.viral:Fetching trends - category: None, limit: 10
+INFO:     127.0.0.1:53244 - "GET /viral-service/api/v1/viral/trends HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37128 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:app.api.viral:Fetching drafts - category: None, limit: 5, platform: None
+INFO:     127.0.0.1:43516 - "GET /viral-service/api/v1/viral/drafts HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44492 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44504 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50768 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50780 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54652 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:54660 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:46570 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:46578 - "GET /viral-service/api/viral/health HTTP/1.1" 404 Not Found

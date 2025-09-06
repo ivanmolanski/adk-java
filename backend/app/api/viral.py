@@ -14,6 +14,23 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+# Import agents
+from ..agents.trend_analyzer import TrendAnalyzer, ViralPostData, TrendAnalysisResult
+from ..agents.content_creator import ContentCreator, TrendInput, ContentDraft as AgentContentDraft, Platform
+from ..agents.compliance_agent import ComplianceAgent, ComplianceResult
+
+# Import scraping (with fallback)
+try:
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from app.scraping import ViralContentScraper
+    SCRAPING_AVAILABLE = True
+except ImportError as e:
+    logger.warning("Scraping module not available: %s", e)
+    SCRAPING_AVAILABLE = False
+    ViralContentScraper = None
+
 router = APIRouter()
 
 # Pydantic Models
@@ -36,15 +53,19 @@ class TrendAnalysis(BaseModel):
     """Model for trend analysis results."""
     post_id: str
     hook: str = Field(..., description="The 3-second hook")
-    cta: str = Field(..., description="Call to action")
+    cta: str = Field(..., description="Call-to-action identified")
     content_category: str = Field(..., description="Content category")
-    relevance_score: float = Field(..., description="Relevance score (0-1)")
-    virality_score: float = Field(..., description="Virality score (0-1)")
-    summary: str = Field(..., description="Analysis summary")
-    compliance_notes: Optional[str] = Field(None, description="Compliance concerns")
+    relevance_score: float = Field(..., ge=0.0, le=1.0, description="Relevance to MD Aesthetics (0-1)")
+    virality_score: float = Field(..., ge=0.0, le=1.0, description="Viral potential score (0-1)")
+    summary: str = Field(..., description="Brief analysis summary")
+    key_themes: List[str] = Field(default_factory=list, description="Key themes identified")
+    engagement_factors: List[str] = Field(default_factory=list, description="Factors driving engagement")
+    compliance_notes: Optional[str] = Field(None, description="Compliance concerns if any")
+    analyzed_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ContentDraft(BaseModel):
     """Model for generated content drafts."""
+    id: str = Field(..., description="Unique identifier for the content draft")
     platform: str
     caption: str
     hashtags: List[str]
@@ -102,21 +123,51 @@ async def analyze_posts(request: AnalyzeRequest) -> List[TrendAnalysis]:
     """
     logger.info(f"Analyzing {len(request.posts)} posts")
     
-    # TODO: Implement TrendAnalyzer agent integration
-    analyses = []
-    for post in request.posts:
-        analysis = TrendAnalysis(
-            post_id=post.id,
-            hook="Mock hook analysis",
-            cta="Book consultation",
-            content_category="Process Demystified",
-            relevance_score=0.85,
-            virality_score=0.78,
-            summary=f"Analysis of {post.platform} post from {post.profile}"
-        )
-        analyses.append(analysis)
+    # Initialize TrendAnalyzer agent
+    analyzer = TrendAnalyzer()
     
-    return analyses
+    # Convert API models to agent models
+    agent_posts = []
+    for post in request.posts:
+        agent_post = ViralPostData(
+            id=post.id,
+            platform=post.platform,
+            profile=post.profile,
+            caption=post.caption,
+            hashtags=post.hashtags,
+            engagement_rate=post.engagement_rate,
+            likes=post.likes,
+            comments=post.comments,
+            shares=post.shares,
+            views=post.views,
+            post_url=post.post_url,
+            scraped_at=post.scraped_at
+        )
+        agent_posts.append(agent_post)
+    
+    # Analyze posts using the agent
+    agent_results = analyzer.analyze_batch(agent_posts)
+    
+    # Convert agent results back to API models
+    api_results = []
+    for result in agent_results:
+        api_result = TrendAnalysis(
+            post_id=result.post_id,
+            hook=result.hook,
+            cta=result.cta,
+            content_category=result.content_category,
+            relevance_score=result.relevance_score,
+            virality_score=result.virality_score,
+            summary=result.summary,
+            key_themes=result.key_themes,
+            engagement_factors=result.engagement_factors,
+            compliance_notes=result.compliance_notes,
+            analyzed_at=result.analyzed_at
+        )
+        api_results.append(api_result)
+    
+    logger.info(f"Completed analysis of {len(api_results)} posts")
+    return api_results
 
 @router.post("/generate", response_model=List[ContentDraft])
 async def generate_content(request: GenerateRequest) -> List[ContentDraft]:
@@ -128,51 +179,159 @@ async def generate_content(request: GenerateRequest) -> List[ContentDraft]:
     """
     logger.info(f"Generating content from {len(request.trend_analysis)} analyses")
     
-    # TODO: Implement ContentCreator agent integration
-    drafts = []
+    # Initialize ContentCreator agent
+    creator = ContentCreator()
+    
+    # Convert API models to agent models
+    agent_inputs = []
     for analysis in request.trend_analysis:
-        draft = ContentDraft(
-            platform="instagram",
-            caption="Transform your skin with our Duo-C-Lift treatment! ✨ Our physician-led team combines Ultherapy + Radiesse for incredible lifting results. Book your consultation to see if you're a candidate! 📞",
-            hashtags=["#duoclift", "#torontoaesthetics", "#skinlift", "#mdaesthetics"],
-            suggested_media_type="before_after_carousel"
+        agent_input = TrendInput(
+            hook=analysis.hook,
+            cta=analysis.cta,
+            content_category=analysis.content_category,
+            virality_score=analysis.virality_score,
+            key_themes=analysis.key_themes,
+            engagement_factors=analysis.engagement_factors
         )
-        drafts.append(draft)
+        agent_inputs.append(agent_input)
     
-    return drafts
+    # Generate content using the agent
+    agent_drafts = creator.generate_batch(agent_inputs, Platform.INSTAGRAM)
+    
+    # Convert agent results back to API models
+    api_drafts = []
+    for draft in agent_drafts:
+        api_draft = ContentDraft(
+            id=draft.id,
+            platform=draft.platform.value,
+            caption=draft.caption,
+            hashtags=draft.hashtags,
+            suggested_media_type=draft.suggested_media_type.value,
+            target_service=draft.target_service.value,
+            compliance_checked=draft.compliance_checked,
+            brand_alignment_score=draft.brand_alignment_score,
+            estimated_engagement=draft.estimated_engagement,
+            suggested_visuals=draft.suggested_visuals,
+            posting_tips=draft.posting_tips,
+            created_at=draft.created_at
+        )
+        api_drafts.append(api_draft)
+    
+    logger.info(f"Generated {len(api_drafts)} content drafts")
+    return api_drafts
 
-@router.post("/analyze-and-generate", response_model=Dict[str, Any])
-async def analyze_and_generate(
-    background_tasks: BackgroundTasks,
-    request: AnalyzeRequest
-) -> Dict[str, Any]:
+@router.get("/trends", response_model=List[TrendAnalysis])
+async def get_trends(
+    category: Optional[str] = None,
+    limit: int = 10,
+    min_virality_score: Optional[float] = None,
+    min_relevance_score: Optional[float] = None
+) -> List[TrendAnalysis]:
     """
-    Complete pipeline: Analyze posts and generate content.
+    Get trend analysis results.
     
-    This endpoint runs the full workflow:
-    1. Analyze viral posts with TrendAnalyzer
-    2. Generate content with ContentCreator  
-    3. Validate with ComplianceAgent
-    4. Send email digest
+    Args:
+        category: Filter by content category
+        limit: Maximum number of trends to return
+        min_virality_score: Minimum virality score filter
+        min_relevance_score: Minimum relevance score filter
     """
-    logger.info(f"Running complete pipeline for {len(request.posts)} posts")
+    logger.info(f"Fetching trends - category: {category}, limit: {limit}")
     
-    # Analyze posts
-    analyses = await analyze_posts(request)
+    # TODO: Implement database query for trend analysis
+    # For now, return empty list until database is connected
+    return []
+
+@router.get("/drafts", response_model=List[ContentDraft])
+async def get_drafts(
+    category: Optional[str] = None,
+    limit: int = 5,
+    platform: Optional[str] = None
+) -> List[ContentDraft]:
+    """
+    Get content drafts for review.
     
-    # Generate content
-    generate_req = GenerateRequest(trend_analysis=analyses)
-    drafts = await generate_content(generate_req)
+    Args:
+        category: Filter by content category
+        limit: Maximum number of drafts to return
+        platform: Filter by platform
+    """
+    logger.info("Fetching drafts - category: %s, limit: %d, platform: %s", category, limit, platform)
     
-    # TODO: Add compliance check and email sending as background tasks
-    background_tasks.add_task(send_email_digest, analyses, drafts)
+    # TODO: Implement database query for content drafts
+    # For now, return empty list until database is connected
+    return []
+
+@router.get("/brief")
+async def get_daily_brief(date: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get daily brief with top trends and drafts.
     
+    Args:
+        date: Date for the brief (YYYY-MM-DD format)
+    """
+    logger.info("Fetching daily brief for date: %s", date)
+    
+    # TODO: Implement daily brief generation
+    # Mock response for now
     return {
-        "status": "completed",
-        "analyses_count": len(analyses),
-        "drafts_count": len(drafts),
-        "message": "Analysis and content generation completed successfully"
+        "date": date or datetime.utcnow().strftime("%Y-%m-%d"),
+        "top_trends": [
+            {
+                "post_id": "trend_1",
+                "hook": "✨ 3-second glow up!",
+                "virality_score": 0.88,
+                "content_category": "Transformation"
+            }
+        ],
+        "content_drafts": [
+            {
+                "id": "draft_001",
+                "platform": "instagram",
+                "caption": "Mock draft caption",
+                "hashtags": ["#mock"]
+            }
+        ],
+        "summary": "Daily viral content analysis complete"
     }
+
+@router.post("/scrape")
+async def trigger_scraping() -> Dict[str, Any]:
+    """
+    Trigger scraping of competitor content.
+    
+    This endpoint initiates the scraping process for viral content
+    from competitor social media accounts.
+    """
+    if not SCRAPING_AVAILABLE or ViralContentScraper is None:
+        raise HTTPException(status_code=503, detail="Scraping service not available")
+    
+    try:
+        scraper = ViralContentScraper()
+        
+        # Define competitors to scrape
+        competitors = [
+            {"platform": "instagram", "url": "https://www.instagram.com/_thelookaesthetics"},
+            {"platform": "instagram", "url": "https://www.instagram.com/skinvitality"},
+            {"platform": "instagram", "url": "https://www.instagram.com/subtle.enhancements"},
+            {"platform": "tiktok", "url": "https://tiktok.com/@skinvitality"}
+        ]
+        
+        # Scrape content
+        content = scraper.scrape_competitor_content(competitors)
+        
+        logger.info("Scraped %d pieces of content", len(content))
+        
+        return {
+            "status": "success",
+            "content_scraped": len(content),
+            "competitors": len(competitors),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error("Error during scraping: %s", e)
+        raise HTTPException(status_code=500, detail=f"Scraping failed: {str(e)}")
 
 async def send_email_digest(analyses: List[TrendAnalysis], drafts: List[ContentDraft]):
     """Background task to send email digest."""

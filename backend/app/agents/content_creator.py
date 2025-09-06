@@ -72,6 +72,7 @@ class TrendInput(BaseModel):
 
 class ContentDraft(BaseModel):
     """Generated content draft."""
+    id: str = Field(..., description="Unique identifier for the content draft")
     platform: Platform
     caption: str = Field(..., description="The main caption text")
     hashtags: List[str] = Field(..., description="Recommended hashtags")

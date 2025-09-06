@@ -8,7 +8,7 @@ import {
   BriefResponse 
 } from '../types';
 
-const VIRAL_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_VIRAL_SERVICE_URL || 'http://localhost:3453/viral-service';
+const VIRAL_SERVICE_BASE_URL = process.env.NEXT_PUBLIC_VIRAL_SERVICE_URL || 'http://localhost:3453';
 
 class ViralIntelligenceService {
   private baseURL: string;

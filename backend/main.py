@@ -48,8 +48,8 @@ def create_app() -> FastAPI:
     )
 
     # Health check endpoint
-    @app.get("/api/v1/health")
-    async def health_check() -> Dict[str, Any]:
+    @app.get("/viral-service/api/v1/health")
+    def health_check() -> Dict[str, Any]:
         """Health check endpoint."""
         return {
             "status": "healthy",
@@ -61,13 +61,17 @@ def create_app() -> FastAPI:
 
     # Import and include API routers  
     try:
+        logger.info("Attempting to import routers...")
         from app.api.viral import router as viral_router
         from app.api.agents import router as agents_router
         
-        app.include_router(viral_router, prefix="/api/v1/viral", tags=["viral"])
-        app.include_router(agents_router, prefix="/api/v1/agents", tags=["agents"])
+        app.include_router(viral_router, prefix="/viral-service/api/v1/viral", tags=["viral"])
+        app.include_router(agents_router, prefix="/viral-service/api/v1/agents", tags=["agents"])
+        logger.info("Routers imported and registered successfully")
     except ImportError as e:
         logger.warning(f"Could not import API routers: {e}. Running with basic endpoints only.")
+    except Exception as e:
+        logger.error(f"Error registering routers: {e}. Running with basic endpoints only.")
 
     return app
 
@@ -84,6 +88,6 @@ if __name__ == "__main__":
         "main:app",
         host=host,
         port=port,
-        reload=True,
+        reload=False,  # Disable auto-reload for stability
         log_level="info"
     )
