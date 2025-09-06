@@ -204,7 +204,7 @@ async def generate_content(request: GenerateRequest) -> List[ContentDraft]:
       platform=draft.platform.value,
       caption=draft.caption,
       hashtags=draft.hashtags,
-      suggested_media_type=draft.suggested_media_type.value,
+      suggested_media_type=draft.suggested_media_type,
       compliance_checked=draft.compliance_checked,
       created_at=draft.created_at
     )
