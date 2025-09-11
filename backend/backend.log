@@ -1,0 +1,56 @@
+nohup: ignoring input
+INFO:     Will watch for changes in these directories: ['/workspaces/adk-java/backend']
+INFO:     Uvicorn running on http://0.0.0.0:3453 (Press CTRL+C to quit)
+INFO:     Started reloader process [12740] using WatchFiles
+INFO:main:Registered router chat_router from app.api.chat
+INFO:main:Registered router router from app.api.viral
+INFO:main:Registered router research_router from app.api.viral_research
+INFO:main:Registered router router from app.api.agents
+INFO:main:Registered router alias_router from app.api.viral_alias
+INFO:main:Registered router scraping_router from app.api.scraping_api
+INFO:main:Registered router trends_router from app.api.trends
+INFO:main:Registered router ingest_router from app.api.ingest
+WARNING:main:Scheduler initialization skipped: cannot import name 'async_session_maker' from 'app.models.database' (/workspaces/adk-java/backend/app/models/database.py)
+INFO:     Started server process [12752]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:60648 - "GET /api/v1/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:41192 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58938 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52498 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching trends - category: None, limit: 5
+INFO:     127.0.0.1:52512 - "GET /viral-service/api/v1/viral/trends?limit=5 HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching drafts - category: None, limit: 3, platform: None
+INFO:     127.0.0.1:53676 - "GET /viral-service/api/v1/viral/drafts?limit=3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43556 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43556 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43556 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43556 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43556 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43556 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43570 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43580 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43570 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43580 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43570 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43570 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/trends HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/drafts HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49922 - "GET /api/v1/viral/daily-brief HTTP/1.1" 404 Not Found
+INFO:app.api.viral:Fetching trends - category: None, limit: 2
+INFO:     127.0.0.1:58902 - "GET /viral-service/api/v1/viral/trends?limit=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54682 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching trends - category: None, limit: 2
+INFO:     127.0.0.1:54682 - "GET /viral-service/api/v1/viral/trends?limit=2 HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching drafts - category: None, limit: 2, platform: None
+INFO:     127.0.0.1:54682 - "GET /viral-service/api/v1/viral/drafts?limit=2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40008 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK
+INFO:app.api.viral:Fetching trends - category: None, limit: 1
+INFO:     127.0.0.1:40010 - "GET /viral-service/api/v1/viral/trends?limit=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53724 - "GET /viral-service/api/v1/health HTTP/1.1" 200 OK

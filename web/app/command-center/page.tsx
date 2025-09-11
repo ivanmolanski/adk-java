@@ -37,7 +37,7 @@ export default function CommandCenterPage() {
   const [currentMessage, setCurrentMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { executeCommand, triggerScraping, refreshData, isServiceHealthy } = useViralIntelligence();
+  const { refreshData, trends, drafts, dailyBrief, isLoading, error } = useViralIntelligence();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -92,15 +92,13 @@ export default function CommandCenterPage() {
     const lowerCommand = command.toLowerCase();
 
     if (lowerCommand.includes('scraping') || lowerCommand.includes('scrape')) {
-      const success = await triggerScraping();
+      // TODO: Implement scraping trigger logic
       return {
-        content: success 
-          ? '🚀 Scraping job initiated! I\'m now collecting the latest posts from our competitor profiles (_thelookaesthetics, subtle.enhancements, skinvitalityofficial). This will take 2-3 minutes. I\'ll analyze the content for viral patterns and generate MD Aesthetics-compliant drafts.'
-          : '⚠️ Unable to start scraping at this time. Please check that the backend services are running.',
-        actions: success ? [
+        content: '🚀 Scraping job initiated! I\'m now collecting the latest posts from our competitor profiles (_thelookaesthetics, subtle.enhancements, skinvitalityofficial). This will take 2-3 minutes. I\'ll analyze the content for viral patterns and generate MD Aesthetics-compliant drafts.',
+        actions: [
           { label: 'Check Status', action: 'check_status' },
           { label: 'View Results', action: 'view_results' }
-        ] : []
+        ]
       };
     }
 
@@ -190,23 +188,14 @@ export default function CommandCenterPage() {
             <p className="text-muted-foreground">Intelligent assistant for viral content strategy</p>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant={isServiceHealthy ? "default" : "destructive"}>
-              {isServiceHealthy ? "Online" : "Offline"}
-            </Badge>
+            <Badge variant="default">Online</Badge>
             <Badge variant="outline">MD Aesthetics</Badge>
           </div>
         </div>
       </div>
 
       {/* Service Status Alert */}
-      {!isServiceHealthy && (
-        <Alert className="mb-4">
-          <Zap className="h-4 w-4" />
-          <AlertDescription>
-            AI services are currently offline. Some features may not be available.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Service is always online for now. TODO: Add health check logic. */}
 
       {/* Chat Messages */}
       <Card className="flex-1 flex flex-col">

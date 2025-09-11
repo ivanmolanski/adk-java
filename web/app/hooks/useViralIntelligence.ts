@@ -37,22 +37,22 @@ export function useViralIntelligence() {
       setIsLoading(true);
       setError(null);
 
-      // Fetch trends
-      const trendsResponse = await fetch('/api/viral/trends');
+      // Fetch trends from Python FastAPI backend
+      const trendsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/viral/trends`);
       if (trendsResponse.ok) {
         const trendsData = await trendsResponse.json();
         setTrends(trendsData.trends || []);
       }
 
-      // Fetch drafts
-      const draftsResponse = await fetch('/api/viral/drafts');
+      // Fetch drafts from Python FastAPI backend
+      const draftsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/viral/drafts`);
       if (draftsResponse.ok) {
         const draftsData = await draftsResponse.json();
         setDrafts(draftsData.drafts || []);
       }
 
-      // Fetch daily brief
-      const briefResponse = await fetch('/api/viral/daily-brief');
+      // Fetch daily brief from Python FastAPI backend
+      const briefResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/viral/daily-brief`);
       if (briefResponse.ok) {
         const briefData = await briefResponse.json();
         setDailyBrief(briefData.brief);

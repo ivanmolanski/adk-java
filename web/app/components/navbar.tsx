@@ -1,9 +1,24 @@
 'use client';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Instagram, Music, LogOut, User } from 'lucide-react';
+import { 
+  Instagram, 
+  Music, 
+  LogOut, 
+  User, 
+  TrendingUp, 
+  PenTool, 
+  Search, 
+  Bot,
+  Home,
+  Menu,
+  X
+} from 'lucide-react';
+import { ModeToggle } from '@/components/mode-toggle';
 
 interface AuthStatus {
   tiktok: boolean;
@@ -12,12 +27,21 @@ interface AuthStatus {
   instagramProfile?: any;
 }
 
+const navigationItems = [
+  { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Research', href: '/research', icon: Search },
+  { name: 'Content Studio', href: '/content-studio', icon: PenTool },
+  { name: 'Command Center', href: '/command-center', icon: Bot },
+];
+
 export function Navbar() {
   const [authStatus, setAuthStatus] = useState<AuthStatus>({
     tiktok: false,
     instagram: false
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     checkAuthStatus();
@@ -72,77 +96,160 @@ export function Navbar() {
   };
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
+          {/* Logo and Brand */}
           <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold">MDAesthetics Viral Forge</h1>
+            <Link href="/" className="flex items-center space-x-2">
+              <TrendingUp className="w-6 h-6 text-primary" />
+              <h1 className="text-xl font-bold">MDAesthetics Viral Forge</h1>
+            </Link>
           </div>
 
-          <div className="flex items-center space-x-4">
-            {/* TikTok Auth Status */}
-            <div className="flex items-center space-x-2">
-              <Music className="w-5 h-5 text-pink-500" />
-              {isLoading ? (
-                <Badge variant="secondary">Loading...</Badge>
-              ) : authStatus.tiktok ? (
-                <div className="flex items-center space-x-2">
-                  <Badge variant="default" className="bg-green-500">
-                    <User className="w-3 h-3 mr-1" />
-                    Connected
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLogout('tiktok')}
-                  >
-                    <LogOut className="w-3 h-3 mr-1" />
-                    Logout
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleLogin('tiktok')}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
                 >
-                  Login
-                </Button>
-              )}
+                  <Icon className="w-4 h-4" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Right side - Auth Status & Theme Toggle */}
+          <div className="flex items-center space-x-4">
+            {/* Social Media Auth Status - Compact for desktop */}
+            <div className="hidden md:flex items-center space-x-2">
+              {/* TikTok Status */}
+              <div className="flex items-center space-x-1">
+                <Music className="w-4 h-4 text-pink-500" />
+                {authStatus.tiktok ? (
+                  <Badge variant="default" className="bg-green-500 text-xs">
+                    TikTok
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    TikTok
+                  </Badge>
+                )}
+              </div>
+
+              {/* Instagram Status */}
+              <div className="flex items-center space-x-1">
+                <Instagram className="w-4 h-4 text-pink-500" />
+                {authStatus.instagram ? (
+                  <Badge variant="default" className="bg-green-500 text-xs">
+                    IG
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    IG
+                  </Badge>
+                )}
+              </div>
             </div>
 
-            {/* Instagram Auth Status */}
-            <div className="flex items-center space-x-2">
-              <Instagram className="w-5 h-5 text-pink-500" />
-              {isLoading ? (
-                <Badge variant="secondary">Loading...</Badge>
-              ) : authStatus.instagram ? (
-                <div className="flex items-center space-x-2">
-                  <Badge variant="default" className="bg-green-500">
-                    <User className="w-3 h-3 mr-1" />
-                    Connected
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleLogout('instagram')}
-                  >
-                    <LogOut className="w-3 h-3 mr-1" />
-                    Logout
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleLogin('instagram')}
-                >
-                  Login
-                </Button>
-              )}
-            </div>
+            {/* Theme Toggle */}
+            <ModeToggle />
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t py-4 space-y-2">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+            
+            {/* Mobile Social Auth Section */}
+            <div className="pt-4 border-t space-y-3">
+              <h3 className="text-sm font-medium text-muted-foreground px-3">Social Accounts</h3>
+              
+              {/* TikTok Auth */}
+              <div className="px-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Music className="w-4 h-4 text-pink-500" />
+                    <span className="text-sm">TikTok</span>
+                  </div>
+                  {authStatus.tiktok ? (
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="default" className="bg-green-500">Connected</Badge>
+                      <Button variant="outline" size="sm" onClick={() => handleLogout('tiktok')}>
+                        Logout
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => handleLogin('tiktok')}>
+                      Login
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Instagram Auth */}
+              <div className="px-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Instagram className="w-4 h-4 text-pink-500" />
+                    <span className="text-sm">Instagram</span>
+                  </div>
+                  {authStatus.instagram ? (
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="default" className="bg-green-500">Connected</Badge>
+                      <Button variant="outline" size="sm" onClick={() => handleLogout('instagram')}>
+                        Logout
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => handleLogin('instagram')}>
+                      Login
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );

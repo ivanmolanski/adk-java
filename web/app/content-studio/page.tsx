@@ -145,7 +145,6 @@ export default function ContentStudioPage() {
                     </div>
                   </div>
                   <CardDescription>
-                    Created {new Date(draft.createdAt).toLocaleDateString()} • 
                     Estimated reach: {Math.floor(Math.random() * 2000 + 500)} followers
                   </CardDescription>
                 </CardHeader>

@@ -1,0 +1,14 @@
+nohup: ignoring input
+INFO:main:Registered router chat_router from app.api.chat
+INFO:main:Registered router router from app.api.viral
+INFO:main:Registered router research_router from app.api.viral_research
+INFO:main:Registered router router from app.api.agents
+INFO:main:Registered router alias_router from app.api.viral_alias
+INFO:main:Registered router scraping_router from app.api.scraping_api
+INFO:main:Registered router trends_router from app.api.trends
+INFO:main:Registered router ingest_router from app.api.ingest
+WARNING:main:Scheduler initialization skipped: cannot import name 'async_session_maker' from 'app.models.database' (/workspaces/adk-java/backend/app/models/database.py)
+INFO:     Started server process [170960]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)

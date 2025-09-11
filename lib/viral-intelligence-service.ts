@@ -35,7 +35,7 @@ class ViralIntelligenceService {
       if (minRelevanceScore) params.append('minRelevanceScore', minRelevanceScore.toString());
 
       const response: AxiosResponse<TrendsResponse> = await axios.get(
-        `${this.baseURL}/api/viral/trends?${params.toString()}`
+        `${this.baseURL}/api/v1/viral/trends?${params.toString()}`
       );
 
       return response.data.trends;
@@ -60,7 +60,7 @@ class ViralIntelligenceService {
       if (platform) params.append('platform', platform);
 
       const response: AxiosResponse<DraftsResponse> = await axios.get(
-        `${this.baseURL}/api/viral/drafts?${params.toString()}`
+        `${this.baseURL}/api/v1/viral/drafts?${params.toString()}`
       );
 
       return response.data.drafts;
@@ -79,7 +79,7 @@ class ViralIntelligenceService {
       if (date) params.append('date', date);
 
       const response: AxiosResponse<BriefResponse> = await axios.get(
-        `${this.baseURL}/api/viral/brief?${params.toString()}`
+        `${this.baseURL}/api/v1/viral/brief?${params.toString()}`
       );
 
       return response.data.brief;
@@ -94,7 +94,7 @@ class ViralIntelligenceService {
    */
   async triggerScraping(): Promise<boolean> {
     try {
-      const response = await axios.post(`${this.baseURL}/api/scraping/trigger`);
+      const response = await axios.post(`${this.baseURL}/api/v1/scraping/trigger`);
       return response.status === 200;
     } catch (error) {
       console.error('Error triggering scraping:', error);
@@ -107,7 +107,7 @@ class ViralIntelligenceService {
    */
   async getScrapingStatus(): Promise<any> {
     try {
-      const response = await axios.get(`${this.baseURL}/api/scraping/status`);
+      const response = await axios.get(`${this.baseURL}/api/v1/scraping/status`);
       return response.data;
     } catch (error) {
       console.error('Error getting scraping status:', error);
@@ -120,7 +120,7 @@ class ViralIntelligenceService {
    */
   async executeCommand(command: string): Promise<any> {
     try {
-      const response = await axios.post(`${this.baseURL}/api/viral/command`, {
+      const response = await axios.post(`${this.baseURL}/api/v1/viral/command`, {
         prompt: command
       });
       return response.data;
@@ -135,8 +135,8 @@ class ViralIntelligenceService {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      console.log('Performing health check to:', `${this.baseURL}/api/viral/health`);
-      const response = await axios.get(`${this.baseURL}/api/viral/health`);
+      console.log('Performing health check to:', `${this.baseURL}/api/v1/health`);
+      const response = await axios.get(`${this.baseURL}/api/v1/health`);
       console.log('Health check response:', response.data);
       return response.data.status === 'UP';
     } catch (error) {

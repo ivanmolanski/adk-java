@@ -143,7 +143,6 @@ class ApifyScraper:
             # Start actor run
             run_url = f"{self.base_url}/acts/{actor_id}/runs"
             headers = {"Authorization": f"Bearer {self.api_token}"}
-            
             response = requests.post(run_url, json=run_input, headers=headers)
             response.raise_for_status()
             
@@ -188,7 +187,6 @@ class ApifyScraper:
             # Start actor run
             run_url = f"{self.base_url}/acts/{actor_id}/runs"
             headers = {"Authorization": f"Bearer {self.api_token}"}
-            
             response = requests.post(run_url, json=run_input, headers=headers)
             response.raise_for_status()
             

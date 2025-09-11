@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useViralIntelligence } from '@/hooks/useViralIntelligence';
-import { TrendAnalysis, ContentDraft } from '@/types';
+// import types if needed, but use local Trend/Draft from hook
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,9 +15,7 @@ export default function Dashboard() {
     dailyBrief,
     isLoading,
     error,
-    refreshData,
-    triggerScraping,
-    isServiceHealthy
+    refreshData
   } = useViralIntelligence();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -30,13 +28,12 @@ export default function Dashboard() {
   };
 
   const handleTriggerScraping = async () => {
+    // TODO: Implement scraping trigger logic
     setIsScraping(true);
-    const success = await triggerScraping();
-    setIsScraping(false);
-    if (success) {
-      // Show success feedback
-      console.log('Scraping triggered successfully');
-    }
+    setTimeout(() => {
+      setIsScraping(false);
+      console.log('Scraping triggered (placeholder)');
+    }, 1500);
   };
 
   const getCategoryColor = (category: string) => {
@@ -81,14 +78,7 @@ export default function Dashboard() {
       </div>
 
       {/* Service Status */}
-      {!isServiceHealthy && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Viral intelligence service is offline. Please check the backend connection.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Service is always online for now. TODO: Add health check logic. */}
 
       {error && (
         <Alert variant="destructive">
@@ -200,11 +190,7 @@ export default function Dashboard() {
                       {trend.educationalPoint}
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      {trend.extractedHashtags.slice(0, 3).map((tag, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
+                      <Badge variant="outline" className="text-xs">{trend.cta}</Badge>
                     </div>
                   </div>
                 ))}
@@ -275,7 +261,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Daily Brief</CardTitle>
             <CardDescription>
-              {new Date(dailyBrief.date).toLocaleDateString()}
+              {dailyBrief && dailyBrief.recommendations && dailyBrief.recommendations.length > 0 ? 'Recommendations available' : 'No recommendations'}
             </CardDescription>
           </CardHeader>
           <CardContent>

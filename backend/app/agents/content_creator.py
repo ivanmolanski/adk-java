@@ -6,6 +6,8 @@ Creates compliant, on-brand content based on viral trend analysis.
 """
 
 from pydantic import BaseModel, Field, validator
+import os
+import uuid
 from typing import List, Dict, Any, Optional, Union
 import logging
 import re
@@ -125,7 +127,8 @@ class ContentCreator(BaseModel):
         arbitrary_types_allowed = True
     
     def generate_content(self, trend_input: TrendInput, target_platform: Platform = Platform.INSTAGRAM,
-                        target_service: Optional[MDService] = None) -> ContentDraft:
+                        target_service: Optional[MDService] = None,
+                        refine: bool = False) -> ContentDraft:
         """
         Generate content based on trend analysis.
         
@@ -154,6 +157,13 @@ class ContentCreator(BaseModel):
         
         # Combine into full caption
         caption = self._build_caption(adapted_hook, educational_content, md_cta, target_platform)
+
+        # Optional refinement pass via GitHub Models (gpt-4o) if enabled
+        if refine or os.getenv('REFINE_CAPTIONS', 'false').lower() in {'1', 'true', 'yes'}:
+            try:
+                caption = self.refine_caption(caption, target_service)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(f"Refinement skipped due to error: {exc}")
         
         # Generate hashtags
         hashtags = self._generate_hashtags(target_service, trend_input.key_themes, target_platform)
@@ -175,6 +185,7 @@ class ContentCreator(BaseModel):
         tips = self._generate_posting_tips(target_platform, trend_input.engagement_factors)
         
         return ContentDraft(
+            id=str(uuid.uuid4()),
             platform=target_platform,
             caption=caption,
             hashtags=hashtags,
@@ -188,7 +199,8 @@ class ContentCreator(BaseModel):
         )
     
     def generate_batch(self, trend_inputs: List[TrendInput], 
-                      target_platform: Platform = Platform.INSTAGRAM) -> List[ContentDraft]:
+                      target_platform: Platform = Platform.INSTAGRAM,
+                      refine: bool = False) -> List[ContentDraft]:
         """
         Generate multiple content pieces from trend analyses.
         
@@ -215,7 +227,7 @@ class ContentCreator(BaseModel):
             used_services.add(target_service)
             
             try:
-                draft = self.generate_content(trend_input, target_platform, target_service)
+                draft = self.generate_content(trend_input, target_platform, target_service, refine=refine)
                 drafts.append(draft)
             except Exception as e:
                 logger.error(f"Error generating content for trend input {i}: {e}")
@@ -249,7 +261,9 @@ class ContentCreator(BaseModel):
         
         # Return highest scoring service, or random if no matches
         if service_scores:
-            return max(service_scores.keys(), key=service_scores.get)
+            # Cast keys to list to satisfy some static type checkers
+            service_key_list = list(service_scores.keys())
+            return max(service_key_list, key=lambda k: service_scores.get(k, 0))
         else:
             return random.choice(available_services)
     
@@ -462,3 +476,48 @@ class ContentCreator(BaseModel):
             tips.append("Monitor trending hashtags daily for opportunities")
         
         return " | ".join(tips)
+
+    # ---------------------- Refinement (LLM) ----------------------
+    def refine_caption(self, caption: str, service: MDService) -> str:
+        """Refine caption using GitHub Models gpt-4o (no fallback).
+
+        Tightens language, ensures clinical authority tone, preserves compliance.
+        """
+        from app.services.ai_client import AIClient  # local import
+        client = AIClient()
+        system_prompt = (
+            "You are an assistant helping refine social media captions for a physician-led medical aesthetics clinic. "
+            "Improve clarity, tighten wording, keep professional, educational tone. Do NOT add emojis beyond 3 total. "
+            "Never use prohibited terms (Botox - use Tox/Neuromodulator). Maintain call-to-action if present."
+        )
+        user_prompt = (
+            f"Original caption for service {service.value}:\n---\n{caption}\n---\n"
+            "Refine it per instructions. Return ONLY the refined caption."
+        )
+        try:
+            import anyio
+            refined = anyio.run(lambda: client.generate(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=400,
+                temperature=0.4
+            ))
+            if refined and isinstance(refined, str) and len(refined) > 20:
+                return refined.strip()
+        except PermissionError:
+            logger.warning("Refinement skipped: permission error calling GitHub Models API")
+        except Exception as exc:  # noqa: BLE001
+            logger.debug(f"Refinement exception: {exc}")
+        finally:
+            try:
+                import asyncio
+                if asyncio.get_event_loop().is_running():  # async context
+                    asyncio.create_task(client.close())
+                else:
+                    import anyio as _anyio
+                    _anyio.run(client.close)
+            except Exception:  # noqa: BLE001
+                pass
+        return caption
