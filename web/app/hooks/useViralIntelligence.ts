@@ -1,15 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { TrendAnalysis } from '../../types';
 
-interface Trend {
-  id: string;
-  category: string;
-  viralityScore: number;
-  relevanceScore: number;
-  educationalPoint: string;
-  hook: string;
-  cta: string;
-}
 
 interface Draft {
   id: string;
@@ -26,7 +18,7 @@ interface DailyBrief {
 }
 
 export function useViralIntelligence() {
-  const [trends, setTrends] = useState<Trend[]>([]);
+  const [trends, setTrends] = useState<TrendAnalysis[]>([]);
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
   const [isLoading, setIsLoading] = useState(true);

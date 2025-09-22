@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack -p 3001",
     "dev:turbo": "next dev --turbopack -p 3001",
-    "build": "NEXT_PUBLIC_BUILD_TIME=$(date +%s) next build --turbo",
+  "build": "NEXT_PUBLIC_BUILD_TIME=$(date +%s) NEXT_PUBLIC_AI_PROVIDER=github NEXT_PUBLIC_AGENT_BACKEND=pydantic next build --turbo",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"

@@ -17,16 +17,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Navbar />
-          <main className="container mx-auto px-4 py-8">
-            {children}
-          </main>
-          <Toaster />
-        </ThemeProvider>
-      </body>
-    </html>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <Navbar />
+      <main className="container mx-auto px-4 py-8 font-sans">
+        {children}
+      </main>
+      <Toaster />
+    </ThemeProvider>
   )
 }

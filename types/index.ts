@@ -21,14 +21,6 @@ export interface SocialMediaPost {
   processedAt?: string;
 }
 
-export interface FirebaseConfig {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
-  appId: string;
-}
 
 // Viral Intelligence Types (matching Java backend models)
 export interface CompetitorPost {

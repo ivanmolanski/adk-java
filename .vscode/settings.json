@@ -1,6 +1,7 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
     "java.configuration.updateBuildConfiguration": "automatic",
+    "java.jdt.ls.java.home": "/usr/local/sdkman/candidates/java/21.0.7-ms",
     "git.ignoreLimitWarning": true,
     "python.analysis.autoImportCompletions": true,
     "python.analysis.typeCheckingMode": "standard",

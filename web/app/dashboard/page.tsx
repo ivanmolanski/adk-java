@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useViralIntelligence } from '@/hooks/useViralIntelligence';
-// import types if needed, but use local Trend/Draft from hook
+// import { Trend } from '../../hooks/useViralIntelligence';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -190,7 +190,7 @@ export default function Dashboard() {
                       {trend.educationalPoint}
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      <Badge variant="outline" className="text-xs">{trend.cta}</Badge>
+                      <Badge variant="outline" className="text-xs">{trend.callToAction}</Badge>
                     </div>
                   </div>
                 ))}

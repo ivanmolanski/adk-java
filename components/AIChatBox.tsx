@@ -1,6 +1,6 @@
 // AIChatBox.tsx
 import React, { useState, useRef } from 'react';
-import { askGemini } from '../lib/ai';
+// import { askGemini } from '../lib/ai';
 import { Loader2 } from 'lucide-react';
 
 export default function AIChatBox() {
@@ -24,9 +24,10 @@ export default function AIChatBox() {
       const data = await res.json();
       aiMsg = { role: 'ai', text: data.result };
     } else {
-      // Normal Gemini chat
-      const text = await askGemini(input);
-      aiMsg = { role: 'ai', text };
+      // Normal Gemini chat (now routed to backend API)
+      const res = await fetch('/api/ai-chat', { method: 'POST', body: JSON.stringify({ prompt: input }) });
+      const data = await res.json();
+      aiMsg = { role: 'ai', text: data.result };
     }
     setMessages(msgs => [...msgs, aiMsg]);
     setLoading(false);

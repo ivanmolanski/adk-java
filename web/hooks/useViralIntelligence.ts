@@ -1,103 +1,58 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendAnalysis, ContentDraft, DailyBrief } from '../types';
-import { viralIntelligenceService } from '../lib/viral-intelligence-service';
 
-export interface UseViralIntelligenceOptions {
-  autoRefresh?: boolean;
-  refreshInterval?: number; // in milliseconds
-}
-
-export interface UseViralIntelligenceReturn {
-  trends: TrendAnalysis[];
-  drafts: ContentDraft[];
-  dailyBrief: DailyBrief | null;
-  isLoading: boolean;
-  error: string | null;
-  refreshData: () => Promise<void>;
-  triggerScraping: () => Promise<boolean>;
-  executeCommand: (command: string) => Promise<any>;
-  isServiceHealthy: boolean;
-}
-
-export function useViralIntelligence(
-  options: UseViralIntelligenceOptions = {}
-): UseViralIntelligenceReturn {
-  const { autoRefresh = true, refreshInterval = 30000 } = options;
-  
+export function useViralIntelligence() {
   const [trends, setTrends] = useState<TrendAnalysis[]>([]);
   const [drafts, setDrafts] = useState<ContentDraft[]>([]);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isServiceHealthy, setIsServiceHealthy] = useState(false);
 
-  const refreshData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    
+  const fetchData = async () => {
     try {
-      // Check service health first
-      const healthy = await viralIntelligenceService.healthCheck();
-      setIsServiceHealthy(healthy);
-      
-      if (!healthy) {
-        setError('Viral intelligence service is not available');
-        return;
+      setIsLoading(true);
+      setError(null);
+
+      // Fetch trends from Python FastAPI backend
+      const trendsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/viral/trends`);
+      if (trendsResponse.ok) {
+        const trendsData = await trendsResponse.json();
+        // Map 'cta' to 'callToAction' for compatibility
+        const mappedTrends = (trendsData.trends || []).map((t: any) => ({
+          ...t,
+          callToAction: t.callToAction ?? t.cta,
+        }));
+        setTrends(mappedTrends);
       }
 
-      // Fetch all data in parallel
-      const [trendsData, draftsData, briefData] = await Promise.all([
-        viralIntelligenceService.getTrends('all', 10),
-        viralIntelligenceService.getDrafts('all', 5),
-        viralIntelligenceService.getDailyBrief()
-      ]);
+      // Fetch drafts from Python FastAPI backend
+      const draftsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/viral/drafts`);
+      if (draftsResponse.ok) {
+        const draftsData = await draftsResponse.json();
+        setDrafts(draftsData.drafts || []);
+      }
 
-      setTrends(trendsData);
-      setDrafts(draftsData);
-      setDailyBrief(briefData);
+      // Fetch daily brief from Python FastAPI backend
+      const briefResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/viral/daily-brief`);
+      if (briefResponse.ok) {
+        const briefData = await briefResponse.json();
+        setDailyBrief(briefData.brief);
+      }
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch viral intelligence data');
-      console.error('Error refreshing viral intelligence data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
-  const triggerScraping = useCallback(async (): Promise<boolean> => {
-    try {
-      const success = await viralIntelligenceService.triggerScraping();
-      if (success) {
-        // Refresh data after a short delay to get new results
-        setTimeout(refreshData, 3000);
-      }
-      return success;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to trigger scraping');
-      return false;
-    }
-  }, [refreshData]);
+  const refreshData = () => {
+    fetchData();
+  };
 
-  const executeCommand = useCallback(async (command: string) => {
-    try {
-      const result = await viralIntelligenceService.executeCommand(command);
-      // Refresh data after command execution
-      setTimeout(refreshData, 1000);
-      return result;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to execute command');
-      return { error: 'Command execution failed' };
-    }
-  }, [refreshData]);
-
-  // Initial data load and auto-refresh setup
   useEffect(() => {
-    refreshData();
-
-    if (autoRefresh) {
-      const interval = setInterval(refreshData, refreshInterval);
-      return () => clearInterval(interval);
-    }
-  }, [refreshData, autoRefresh, refreshInterval]);
+    fetchData();
+  }, []);
 
   return {
     trends,
@@ -105,9 +60,6 @@ export function useViralIntelligence(
     dailyBrief,
     isLoading,
     error,
-    refreshData,
-    triggerScraping,
-    executeCommand,
-    isServiceHealthy
+    refreshData
   };
 }

@@ -14,16 +14,15 @@
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "latest",
+    "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-progress": "latest",
     "@radix-ui/react-slot": "latest",
     "@radix-ui/react-toast": "latest",
     "autoprefixer": "latest",
-    "axios": "latest",
+    "axios": "^1.12.2",
     "class-variance-authority": "latest",
     "clsx": "latest",
     "date-fns": "latest",
-    "firebase": "latest",
-    "firebase-admin": "latest",
     "lucide-react": "latest",
     "next": "latest",
     "next-themes": "latest",
@@ -37,6 +36,7 @@
     "tailwindcss": "latest"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
