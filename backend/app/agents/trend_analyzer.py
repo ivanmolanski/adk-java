@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,8 @@ class ViralPostData(BaseModel):
 
 class TrendAnalysisResult(BaseModel):
   """Output model for trend analysis results."""
+  model_config = ConfigDict(str_strip_whitespace=True)
+  
   post_id: str
   hook: str = Field(..., description='The opening 3-second hook')
   cta: str = Field(..., description='Call-to-action identified')
@@ -65,9 +67,10 @@ class TrendAnalysisResult(BaseModel):
   )
   analyzed_at: datetime = Field(default_factory=datetime.utcnow)
 
-  @validator('relevance_score', 'virality_score')
+  @field_validator('relevance_score', 'virality_score')
   @classmethod
-  def validate_scores(cls, value):  # type: ignore
+  def validate_scores(cls, value: float) -> float:
+    """Validate scores are in range 0-1."""
     if not 0 <= value <= 1:
       raise ValueError('Score must be between 0 and 1')
     return value
@@ -75,6 +78,7 @@ class TrendAnalysisResult(BaseModel):
 
 class TrendAnalyzer(BaseModel):
   """Analyzes viral posts for MD Aesthetics competitive intelligence."""
+  model_config = ConfigDict(arbitrary_types_allowed=True)
 
   name: str = 'TrendAnalyzer'
   version: str = '2.0.0'
@@ -90,9 +94,6 @@ class TrendAnalyzer(BaseModel):
       'vitamin c', 'medical grade', 'physician', 'consultation'
     ]
   )
-
-  class Config:
-    arbitrary_types_allowed = True
 
   def analyze_post(self, post: ViralPostData) -> TrendAnalysisResult:
     """Analyze a single post and return structured heuristics."""

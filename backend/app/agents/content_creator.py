@@ -5,7 +5,7 @@ Pydantic-based agent for generating MD Aesthetics-branded social media content.
 Creates compliant, on-brand content based on viral trend analysis.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 import os
 import uuid
 from typing import List, Dict, Any, Optional, Union
@@ -96,6 +96,7 @@ class ContentCreator(BaseModel):
     Generates superior, on-brand social media content based on viral trend analysis.
     Ensures compliance with medical aesthetics regulations and brand guidelines.
     """
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     
     name: str = "ContentCreator"
     version: str = "2.0.0"
@@ -121,10 +122,6 @@ class ContentCreator(BaseModel):
             MDService.MOXI: "Fractional laser for skin texture improvement"
         }
     )
-    
-    class Config:
-        """Pydantic configuration."""
-        arbitrary_types_allowed = True
     
     def generate_content(self, trend_input: TrendInput, target_platform: Platform = Platform.INSTAGRAM,
                         target_service: Optional[MDService] = None,
