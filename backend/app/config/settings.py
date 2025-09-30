@@ -9,7 +9,7 @@ platform should inject variables.
 from __future__ import annotations
 
 from functools import lru_cache
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic_settings import BaseSettings
 from typing import List, Optional
 import os
@@ -69,8 +69,7 @@ class Settings(BaseSettings):
   google_cse_cx: Optional[str] = Field(default=None, validation_alias='GOOGLE_CSE_CX')
   apify_token: Optional[str] = Field(default=None, validation_alias='APIFY_TOKEN')
 
-  class Config:
-    case_sensitive = False
+  model_config = ConfigDict(case_sensitive=False)
 
   def recipients_list(self) -> List[str]:
     return [r.strip() for r in self.digest_recipients.split(',') if r.strip()]
