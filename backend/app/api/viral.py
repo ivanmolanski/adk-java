@@ -164,7 +164,7 @@ async def analyze_posts(request: AnalyzeRequest, session: AsyncSession = Depends
   agent_results = analyzer.analyze_batch(agent_posts)
 
   post_repo = ViralPostRepository(session)
-  await post_repo.upsert_many([p.dict() for p in request.posts])
+  await post_repo.upsert_many([p.model_dump() for p in request.posts])
 
   analysis_repo = TrendAnalysisRepository(session)
   records_data = []

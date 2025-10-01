@@ -1,6 +1,12 @@
 target/
 .idea
 node_modules
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
 
 # Security - Never commit sensitive files (but keep locally for development)
 # service-account.json - commented out for local development

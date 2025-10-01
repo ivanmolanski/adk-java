@@ -6,7 +6,7 @@ Payload: { posts: [...], refine: bool }
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Any, Dict, Optional
 from datetime import datetime
 import logging
@@ -34,8 +34,10 @@ class IngestPost(BaseModel):
     post_url: Optional[str] = None
     scraped_at: Optional[datetime] = None
 
-    @validator('platform')
-    def validate_platform(cls, v):  # type: ignore
+    @field_validator('platform')
+    @classmethod
+    def validate_platform(cls, v: str) -> str:
+        """Validate platform is supported."""
         if v.lower() not in {"instagram", "tiktok", "web", "unknown"}:
             raise ValueError("Unsupported platform")
         return v.lower()
@@ -58,7 +60,7 @@ class IngestResponse(BaseModel):
 async def ingest_posts(request: IngestRequest, session: AsyncSession = Depends(get_session)) -> IngestResponse:
     if not request.posts:
         raise HTTPException(status_code=400, detail="No posts provided")
-    raw_posts = [p.dict() for p in request.posts]
+    raw_posts = [p.model_dump() for p in request.posts]
     logger.info("Ingesting %d posts (refine=%s)", len(raw_posts), request.refine)
     result = await process_posts(session=session, posts=raw_posts, refine=request.refine)
     # metrics increment
