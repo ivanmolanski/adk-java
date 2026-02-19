@@ -25,7 +25,7 @@ Each value is a list of (start_date, end_date) tuples (inclusive, YYYY-MM-DD).
 
 from __future__ import annotations
 from datetime import date, timedelta
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 
 # ─────────────────────────────────────────────────────────────
@@ -204,7 +204,7 @@ def calc_member(name: str) -> Dict:
 
     gross = 0
     weekends = 0
-    holiday_hits: set[date] = set()
+    holiday_hits: Set[date] = set()
 
     for start, end in segments:
         d = start
@@ -294,7 +294,7 @@ def print_report() -> None:
     print("UNATTRIBUTED EVENTS  (assign to correct person above and re-run)")
     print(sep)
     for start, end, note in UNATTRIBUTED:
-        # calculate working days for Ontario (default) 
+        # calculate working days for Ontario (default)
         wd_on = _working_days(start, end, ONTARIO_HOLIDAYS)
         wd_us = _working_days(start, end, US_HOLIDAYS)
         print(f"  {start}  →  {end}  "
